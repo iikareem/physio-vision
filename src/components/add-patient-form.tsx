@@ -166,7 +166,7 @@ export function AddPatientForm({ onCancel, onCreated }: Props) {
             Physio notes
           </h3>
           <p className="text-sm text-stone-500">
-            Tap a chip to fill the field, or type your own wording underneath.
+            Pick from the list, or type your own wording underneath.
           </p>
 
           <PresetOrCustomField

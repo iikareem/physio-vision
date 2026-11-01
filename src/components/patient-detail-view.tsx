@@ -262,7 +262,7 @@ export function PatientDetailView({ patientId }: { patientId: string }) {
             </div>
 
             <p className="text-sm text-stone-500">
-              Tap a chip to fill a field, or type your own wording underneath.
+              Pick from the list, or type your own wording underneath.
             </p>
 
             <PresetOrCustomField
