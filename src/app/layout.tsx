@@ -23,8 +23,8 @@ export const metadata: Metadata = {
   applicationName: "Physio Vision",
   appleWebApp: {
     capable: true,
-    // Opaque status bar — avoids the frosted/blur strip under the notch in PWA.
-    statusBarStyle: "black",
+    // Content draws under the status bar; header paint matches so no black band/shadow.
+    statusBarStyle: "black-translucent",
     title: "Physio Vision",
   },
   formatDetection: {
@@ -34,6 +34,7 @@ export const metadata: Metadata = {
   other: {
     "mobile-web-app-capable": "yes",
     "apple-mobile-web-app-capable": "yes",
+    "apple-mobile-web-app-status-bar-style": "black-translucent",
     "apple-mobile-web-app-title": "Physio Vision",
   },
   icons: {
@@ -56,9 +57,10 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   viewportFit: "cover",
+  // Match mobile header (teal-950) so PWA chrome / overscroll isn’t a darker band.
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#134e4a" },
-    { media: "(prefers-color-scheme: dark)", color: "#134e4a" },
+    { media: "(prefers-color-scheme: light)", color: "#042f2e" },
+    { media: "(prefers-color-scheme: dark)", color: "#042f2e" },
   ],
 };
 
@@ -69,7 +71,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${display.variable} ${body.variable} h-full`}>
-      <body className="min-h-screen min-h-dvh overflow-x-hidden antialiased">
+      <body className="min-h-screen min-h-dvh overflow-x-hidden bg-[#042f2e] antialiased">
         <RegisterSW />
         <Providers>{children}</Providers>
       </body>

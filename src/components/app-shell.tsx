@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect } from "react";
 import { WORKSPACES } from "@/data/mock";
 import { useAppStore } from "@/context/app-store";
 import { WorkspaceSwitcher } from "@/components/workspace-switcher";
 import { useHydrated } from "@/lib/use-hydrated";
-import { workspaceTheme } from "@/lib/workspace-theme";
+import { WORKSPACE_CHROME, workspaceTheme } from "@/lib/workspace-theme";
 
 const NAV = [
   {
@@ -70,11 +71,24 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const visualId = hydrated ? workspaceId : "clinic";
   const workspace = WORKSPACES.find((w) => w.id === visualId);
   const theme = workspaceTheme(visualId);
+  const chrome = WORKSPACE_CHROME[visualId];
+
+  useEffect(() => {
+    document.documentElement.style.backgroundColor = chrome;
+    document.body.style.backgroundColor = chrome;
+    let meta = document.querySelector('meta[name="theme-color"]');
+    if (!meta) {
+      meta = document.createElement("meta");
+      meta.setAttribute("name", "theme-color");
+      document.head.appendChild(meta);
+    }
+    meta.setAttribute("content", chrome);
+  }, [chrome]);
 
   return (
     <div
       data-workspace={visualId}
-      className={`flex min-h-dvh flex-col md:flex-row ${theme.pageTint}`}
+      className={`flex min-h-screen min-h-dvh flex-col md:flex-row ${theme.pageTint}`}
     >
       <aside
         className={`sticky top-0 z-30 hidden h-dvh w-56 shrink-0 flex-col border-r md:flex lg:w-64 ${theme.shell}`}
@@ -124,11 +138,23 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </div>
       </aside>
 
+      {/* Solid top bar: fills notch/status area so PWA never shows a black/shadow band. */}
       <div
-        className={`sticky top-0 z-30 border-b md:hidden safe-top ${theme.shell}`}
-        style={{ backgroundColor: visualId === "clinic" ? "#042f2e" : "#0f172a" }}
+        className="sticky top-0 z-30 md:hidden"
+        style={{ backgroundColor: chrome }}
       >
-        <div className="flex items-center justify-between gap-3 px-4 py-3">
+        <div
+          aria-hidden
+          className="w-full"
+          style={{
+            height: "env(safe-area-inset-top, 0px)",
+            backgroundColor: chrome,
+          }}
+        />
+        <div
+          className={`flex items-center justify-between gap-3 px-4 pb-3 pt-2 ${theme.shell}`}
+          style={{ backgroundColor: chrome }}
+        >
           <div className="min-w-0">
             <p className="font-[family-name:var(--font-display)] text-lg tracking-tight text-white">
               Physio Vision

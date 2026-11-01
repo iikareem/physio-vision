@@ -12,8 +12,8 @@ export default function manifest(): MetadataRoute.Manifest {
     // Older clients that ignore standalone still get a usable fullscreen-ish UI.
     display_override: ["standalone", "minimal-ui", "browser"],
     orientation: "any",
-    background_color: "#134e4a",
-    theme_color: "#134e4a",
+    background_color: "#042f2e",
+    theme_color: "#042f2e",
     lang: "en",
     prefer_related_applications: false,
     categories: ["medical", "productivity", "health"],

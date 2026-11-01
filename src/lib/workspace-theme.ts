@@ -25,7 +25,7 @@ export const WORKSPACE_THEME = {
     heroCta: "bg-white text-teal-950 hover:bg-teal-50",
     link: "text-teal-700",
     pageTint:
-      "bg-[radial-gradient(ellipse_90%_55%_at_100%_-10%,#d8f3ea_0%,transparent_50%),radial-gradient(ellipse_70%_45%_at_-10%_110%,#e7f5f1_0%,transparent_45%),linear-gradient(180deg,#f7faf8_0%,#f0f4f1_100%)]",
+      "bg-[radial-gradient(ellipse_70%_45%_at_-10%_110%,#e7f5f1_0%,transparent_45%),linear-gradient(180deg,#f7faf8_0%,#f0f4f1_100%)]",
   },
   private: {
     id: "private" as const,
@@ -47,9 +47,15 @@ export const WORKSPACE_THEME = {
     heroCta: "bg-white text-slate-950 hover:bg-sky-50",
     link: "text-sky-700",
     pageTint:
-      "bg-[radial-gradient(ellipse_90%_55%_at_100%_-10%,#dbeafe_0%,transparent_50%),radial-gradient(ellipse_70%_45%_at_-10%_110%,#e2e8f0_0%,transparent_45%),linear-gradient(180deg,#f8fafc_0%,#f1f5f9_100%)]",
+      "bg-[radial-gradient(ellipse_70%_45%_at_-10%_110%,#e2e8f0_0%,transparent_45%),linear-gradient(180deg,#f8fafc_0%,#f1f5f9_100%)]",
   },
 } as const;
+
+/** Solid PWA chrome / overscroll color — must match mobile header. */
+export const WORKSPACE_CHROME: Record<WorkspaceId, string> = {
+  clinic: "#042f2e",
+  private: "#0f172a",
+};
 
 export function workspaceTheme(id: WorkspaceId) {
   return WORKSPACE_THEME[id];

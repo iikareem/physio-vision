@@ -49,11 +49,14 @@ html {
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
   height: 100%;
+  /* Match PWA header so rubber-band / status area never flashes a darker band. */
+  background-color: #042f2e;
 }
 
 body {
   color: var(--foreground);
   font-family: var(--font-body), system-ui, sans-serif;
+  background-color: #042f2e;
   /* Older iOS lacks dvh — keep vh first. */
   min-height: 100vh;
   min-height: 100dvh;
