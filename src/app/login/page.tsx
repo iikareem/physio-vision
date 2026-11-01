@@ -27,7 +27,7 @@ export default function LoginPage() {
       const message =
         err instanceof ApiError
           ? err.message
-          : "Could not sign in. Is the API running?";
+          : "Could not reach the API. Check your connection and try again.";
       setError(message);
     } finally {
       setSubmitting(false);

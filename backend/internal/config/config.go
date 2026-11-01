@@ -24,7 +24,7 @@ func Load() (Config, error) {
 		AuthPassword: os.Getenv("AUTH_PASSWORD"),
 		AuthName:     envOr("AUTH_NAME", "Therapist"),
 		JWTSecret:    os.Getenv("JWT_SECRET"),
-		HTTPAddr:     envOr("HTTP_ADDR", ":8080"),
+		HTTPAddr:     resolveHTTPAddr(),
 		CORSOrigins:  splitCSV(envOr("CORS_ORIGINS", "http://localhost:3000")),
 		UploadDir:    envOr("UPLOAD_DIR", "/data/uploads"),
 	}
@@ -53,6 +53,20 @@ func envOr(key, fallback string) string {
 		return v
 	}
 	return fallback
+}
+
+// resolveHTTPAddr prefers HTTP_ADDR, then Railway/Heroku-style PORT, else :8080.
+func resolveHTTPAddr() string {
+	if v := os.Getenv("HTTP_ADDR"); v != "" {
+		return v
+	}
+	if port := os.Getenv("PORT"); port != "" {
+		if strings.HasPrefix(port, ":") {
+			return port
+		}
+		return ":" + port
+	}
+	return ":8080"
 }
 
 func splitCSV(raw string) []string {
