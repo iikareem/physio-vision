@@ -30,12 +30,24 @@ export const metadata: Metadata = {
   formatDetection: {
     telephone: false,
   },
+  // Extra legacy keys older iOS / Android look for (alongside appleWebApp).
+  other: {
+    "mobile-web-app-capable": "yes",
+    "apple-mobile-web-app-capable": "yes",
+    "apple-mobile-web-app-title": "Physio Vision",
+  },
   icons: {
     icon: [
       { url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
       { url: "/icons/icon-512.png", sizes: "512x512", type: "image/png" },
+      { url: "/icons/apple-touch-icon.png", type: "image/png" },
     ],
-    apple: [{ url: "/icons/apple-touch-icon.png", sizes: "180x180" }],
+    apple: [
+      // No sizes — required by older iOS which ignores sized variants.
+      { url: "/icons/apple-touch-icon.png" },
+      { url: "/icons/apple-touch-icon.png", sizes: "180x180" },
+      { url: "/icons/icon-192.png", sizes: "192x192" },
+    ],
   },
 };
 
@@ -57,7 +69,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${display.variable} ${body.variable} h-full`}>
-      <body className="min-h-dvh overflow-x-hidden antialiased">
+      <body className="min-h-screen min-h-dvh overflow-x-hidden antialiased">
         <RegisterSW />
         <Providers>{children}</Providers>
       </body>

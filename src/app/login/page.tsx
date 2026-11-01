@@ -3,6 +3,7 @@
 import { FormEvent, useState } from "react";
 import { ApiError } from "@/lib/api/client";
 import { useAuth } from "@/context/auth-context";
+import { IosInstallGuide } from "@/components/ios-install-guide";
 import {
   Field,
   inputClass,
@@ -35,7 +36,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-dvh items-center justify-center bg-gradient-to-br from-teal-950 via-teal-900 to-stone-900 px-4 py-10">
+    <div className="flex min-h-screen min-h-dvh items-center justify-center bg-gradient-to-br from-teal-950 via-teal-900 to-stone-900 px-4 py-10">
       <div className="w-full max-w-md space-y-6">
         <div className="text-center text-white">
           <p className="font-[family-name:var(--font-display)] text-3xl font-semibold tracking-tight">
@@ -45,6 +46,8 @@ export default function LoginPage() {
             Sign in to your clinic and private workspaces
           </p>
         </div>
+
+        <IosInstallGuide variant="banner" />
 
         <Surface className="p-6 shadow-xl">
           <form onSubmit={onSubmit} className="space-y-4">

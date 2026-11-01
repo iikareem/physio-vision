@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { WORKSPACES } from "@/data/mock";
 import { useAuth } from "@/context/auth-context";
 import { useAppStore } from "@/context/app-store";
+import { IosInstallGuide } from "@/components/ios-install-guide";
 import { PageHeader, SecondaryButton, Surface } from "@/components/ui";
 
 export function SettingsView() {
@@ -30,6 +31,8 @@ export function SettingsView() {
         title="Settings"
         subtitle="Account and practice workspaces"
       />
+
+      <IosInstallGuide variant="card" />
 
       <Surface className="space-y-4 p-5">
         <div>
