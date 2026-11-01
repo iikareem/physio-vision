@@ -3,6 +3,7 @@
 import { FormEvent, useId, useState } from "react";
 import { useAppStore } from "@/context/app-store";
 import { PatientStatusPicker } from "@/components/patient-status-picker";
+import { PresetOrCustomField } from "@/components/preset-or-custom-field";
 import {
   Field,
   inputClass,
@@ -10,19 +11,14 @@ import {
   SecondaryButton,
   Surface,
 } from "@/components/ui";
+import {
+  CHIEF_COMPLAINT_OPTIONS,
+  CONDITION_OPTIONS,
+  DIAGNOSIS_OPTIONS,
+  PRECAUTION_OPTIONS,
+  TREATMENT_GOAL_OPTIONS,
+} from "@/lib/patient-clinical-options";
 import type { PatientStatus } from "@/lib/types";
-
-const CONDITION_PRESETS = [
-  "Lower back pain",
-  "Neck strain",
-  "Frozen shoulder",
-  "Post-ACL rehab",
-  "Chronic knee pain",
-  "Plantar fasciitis",
-  "Hip mobility",
-  "Sports performance",
-  "Prenatal physio",
-];
 
 const textareaClass = `${inputClass} min-h-[5.5rem] py-3`;
 
@@ -115,7 +111,8 @@ export function AddPatientForm({ onCancel, onCreated }: Props) {
           New patient
         </h2>
         <p className="mt-1 text-sm text-stone-500">
-          Name is required — everything else is optional and can be filled in later.
+          Name is required. Clinical fields are optional — pick a common type or
+          write your own wording.
         </p>
       </div>
 
@@ -186,61 +183,39 @@ export function AddPatientForm({ onCancel, onCreated }: Props) {
 
         <section className="space-y-4">
           <h3 className="text-xs font-semibold uppercase tracking-wide text-stone-500">
-            Clinical
+            Physio notes
           </h3>
-          <div>
-            <p className="mb-1.5 text-sm font-medium text-stone-600">
-              Condition / type (optional)
-            </p>
-            <div className="mb-2 flex flex-wrap gap-2">
-              {CONDITION_PRESETS.map((preset) => {
-                const selected = condition === preset;
-                return (
-                  <button
-                    key={preset}
-                    type="button"
-                    onClick={() =>
-                      setCondition((prev) => (prev === preset ? "" : preset))
-                    }
-                    className={`min-h-9 touch-manipulation rounded-full px-3 text-sm font-bold transition ${
-                      selected
-                        ? "btn-accent"
-                        : "border-2 border-stone-300 bg-white text-stone-800 hover:border-stone-400"
-                    }`}
-                  >
-                    {preset}
-                  </button>
-                );
-              })}
-            </div>
-            <input
-              id={`${formId}-condition`}
-              value={condition}
-              onChange={(e) => setCondition(e.target.value)}
-              placeholder="Or type a custom condition…"
-              className={inputClass}
-            />
-          </div>
+          <p className="text-sm text-stone-500">
+            Use the dropdown for a quick type, then edit the text freely — your
+            own wording always wins.
+          </p>
+
+          <PresetOrCustomField
+            id={`${formId}-condition`}
+            label="Condition / area (optional)"
+            value={condition}
+            onChange={setCondition}
+            options={CONDITION_OPTIONS}
+            placeholder="e.g. Left knee after fall…"
+          />
 
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Diagnosis (optional)">
-              <input
-                id={`${formId}-diagnosis`}
-                value={diagnosis}
-                onChange={(e) => setDiagnosis(e.target.value)}
-                placeholder="Clinical diagnosis"
-                className={inputClass}
-              />
-            </Field>
-            <Field label="Chief complaint (optional)">
-              <input
-                id={`${formId}-complaint`}
-                value={chiefComplaint}
-                onChange={(e) => setChiefComplaint(e.target.value)}
-                placeholder="Main reason for visit"
-                className={inputClass}
-              />
-            </Field>
+            <PresetOrCustomField
+              id={`${formId}-diagnosis`}
+              label="Working impression (optional)"
+              value={diagnosis}
+              onChange={setDiagnosis}
+              options={DIAGNOSIS_OPTIONS}
+              placeholder="Your physio impression — not a medical diagnosis"
+            />
+            <PresetOrCustomField
+              id={`${formId}-complaint`}
+              label="Main problem (optional)"
+              value={chiefComplaint}
+              onChange={setChiefComplaint}
+              options={CHIEF_COMPLAINT_OPTIONS}
+              placeholder="What brought them in…"
+            />
           </div>
 
           <Field label="PT evaluation (optional)">
@@ -249,43 +224,41 @@ export function AddPatientForm({ onCancel, onCreated }: Props) {
               value={ptEvaluation}
               onChange={(e) => setPtEvaluation(e.target.value)}
               rows={4}
-              placeholder="Initial physiotherapy evaluation findings…"
+              placeholder="Write findings in your own words — ROM, strength, special tests…"
               className={textareaClass}
             />
           </Field>
 
-          <Field label="Medical history (optional)">
+          <Field label="Relevant history (optional)">
             <textarea
               id={`${formId}-history`}
               value={medicalHistory}
               onChange={(e) => setMedicalHistory(e.target.value)}
               rows={3}
-              placeholder="Relevant past conditions, surgeries, medications…"
+              placeholder="Past injuries, surgeries, meds — whatever matters for treatment…"
               className={textareaClass}
             />
           </Field>
 
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Precautions (optional)">
-              <textarea
-                id={`${formId}-precautions`}
-                value={precautions}
-                onChange={(e) => setPrecautions(e.target.value)}
-                rows={3}
-                placeholder="Contraindications, red flags…"
-                className={textareaClass}
-              />
-            </Field>
-            <Field label="Treatment goals (optional)">
-              <textarea
-                id={`${formId}-goals`}
-                value={treatmentGoals}
-                onChange={(e) => setTreatmentGoals(e.target.value)}
-                rows={3}
-                placeholder="Patient goals and plan focus…"
-                className={textareaClass}
-              />
-            </Field>
+            <PresetOrCustomField
+              id={`${formId}-precautions`}
+              label="Precautions (optional)"
+              value={precautions}
+              onChange={setPrecautions}
+              options={PRECAUTION_OPTIONS}
+              placeholder="Anything to watch or avoid…"
+              multiline
+            />
+            <PresetOrCustomField
+              id={`${formId}-goals`}
+              label="Treatment goals (optional)"
+              value={treatmentGoals}
+              onChange={setTreatmentGoals}
+              options={TREATMENT_GOAL_OPTIONS}
+              placeholder="What you and the patient are working toward…"
+              multiline
+            />
           </div>
         </section>
 

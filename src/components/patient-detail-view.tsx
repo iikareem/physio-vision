@@ -14,6 +14,7 @@ import {
   Spinner,
   useToast,
 } from "@/components/feedback";
+import { PresetOrCustomField } from "@/components/preset-or-custom-field";
 import {
   Field,
   inputClass,
@@ -22,6 +23,13 @@ import {
   Surface,
 } from "@/components/ui";
 import { formatDate, formatDateTime } from "@/lib/format";
+import {
+  CHIEF_COMPLAINT_OPTIONS,
+  CONDITION_OPTIONS,
+  DIAGNOSIS_OPTIONS,
+  PRECAUTION_OPTIONS,
+  TREATMENT_GOAL_OPTIONS,
+} from "@/lib/patient-clinical-options";
 import type { PatientStatus } from "@/lib/types";
 
 export function PatientDetailView({ patientId }: { patientId: string }) {
@@ -268,61 +276,70 @@ export function PatientDetailView({ patientId }: { patientId: string }) {
                   className={inputClass}
                 />
               </Field>
-              <Field label="Condition / type (optional)">
-                <input
-                  value={condition}
-                  onChange={(e) => setCondition(e.target.value)}
-                  className={inputClass}
-                />
-              </Field>
-              <Field label="Diagnosis (optional)">
-                <input
-                  value={diagnosis}
-                  onChange={(e) => setDiagnosis(e.target.value)}
-                  className={inputClass}
-                />
-              </Field>
-              <Field label="Chief complaint (optional)">
-                <input
-                  value={chiefComplaint}
-                  onChange={(e) => setChiefComplaint(e.target.value)}
-                  className={inputClass}
-                />
-              </Field>
+            </div>
+
+            <p className="text-sm text-stone-500">
+              Physio notes — quick-pick a type or write freely in your own words.
+            </p>
+
+            <PresetOrCustomField
+              label="Condition / area (optional)"
+              value={condition}
+              onChange={setCondition}
+              options={CONDITION_OPTIONS}
+              placeholder="e.g. Left knee after fall…"
+            />
+            <div className="grid gap-3 sm:grid-cols-2">
+              <PresetOrCustomField
+                label="Working impression (optional)"
+                value={diagnosis}
+                onChange={setDiagnosis}
+                options={DIAGNOSIS_OPTIONS}
+                placeholder="Your physio impression — not a medical diagnosis"
+              />
+              <PresetOrCustomField
+                label="Main problem (optional)"
+                value={chiefComplaint}
+                onChange={setChiefComplaint}
+                options={CHIEF_COMPLAINT_OPTIONS}
+                placeholder="What brought them in…"
+              />
             </div>
             <Field label="PT evaluation (optional)">
               <textarea
                 value={ptEvaluation}
                 onChange={(e) => setPtEvaluation(e.target.value)}
                 rows={4}
+                placeholder="Findings in your own words…"
                 className={`${inputClass} min-h-[5.5rem] py-3`}
               />
             </Field>
-            <Field label="Medical history (optional)">
+            <Field label="Relevant history (optional)">
               <textarea
                 value={medicalHistory}
                 onChange={(e) => setMedicalHistory(e.target.value)}
                 rows={3}
+                placeholder="Past injuries, surgeries, meds…"
                 className={`${inputClass} min-h-[5rem] py-3`}
               />
             </Field>
             <div className="grid gap-3 sm:grid-cols-2">
-              <Field label="Precautions (optional)">
-                <textarea
-                  value={precautions}
-                  onChange={(e) => setPrecautions(e.target.value)}
-                  rows={3}
-                  className={`${inputClass} min-h-[5rem] py-3`}
-                />
-              </Field>
-              <Field label="Treatment goals (optional)">
-                <textarea
-                  value={treatmentGoals}
-                  onChange={(e) => setTreatmentGoals(e.target.value)}
-                  rows={3}
-                  className={`${inputClass} min-h-[5rem] py-3`}
-                />
-              </Field>
+              <PresetOrCustomField
+                label="Precautions (optional)"
+                value={precautions}
+                onChange={setPrecautions}
+                options={PRECAUTION_OPTIONS}
+                placeholder="Anything to watch or avoid…"
+                multiline
+              />
+              <PresetOrCustomField
+                label="Treatment goals (optional)"
+                value={treatmentGoals}
+                onChange={setTreatmentGoals}
+                options={TREATMENT_GOAL_OPTIONS}
+                placeholder="What you and the patient are working toward…"
+                multiline
+              />
             </div>
             <div>
               <p className="mb-1.5 text-sm font-medium text-stone-600">Status</p>
@@ -403,7 +420,7 @@ export function PatientDetailView({ patientId }: { patientId: string }) {
             </div>
             <div>
               <dt className="text-xs font-medium uppercase tracking-wide text-stone-500">
-                Diagnosis
+                Working impression
               </dt>
               <dd className="mt-1 text-stone-800">
                 {patient.diagnosis || "—"}
@@ -411,7 +428,7 @@ export function PatientDetailView({ patientId }: { patientId: string }) {
             </div>
             <div className="sm:col-span-3">
               <dt className="text-xs font-medium uppercase tracking-wide text-stone-500">
-                Chief complaint
+                Main problem
               </dt>
               <dd className="mt-1 text-stone-800">
                 {patient.chiefComplaint || "—"}
@@ -453,7 +470,7 @@ export function PatientDetailView({ patientId }: { patientId: string }) {
               {patient.medicalHistory ? (
                 <div className="sm:col-span-2">
                   <dt className="text-xs font-medium uppercase tracking-wide text-stone-500">
-                    Medical history
+                    Relevant history
                   </dt>
                   <dd className="mt-1 whitespace-pre-wrap text-stone-800">
                     {patient.medicalHistory}
