@@ -9,17 +9,12 @@ import { inputClass } from "@/components/ui";
 import { isBoardPatientStatus } from "@/lib/patient-status";
 import { workspaceTheme } from "@/lib/workspace-theme";
 
-function firstName(fullName: string | undefined) {
-  const part = fullName?.trim().split(/\s+/)[0];
-  return part || "there";
-}
-
 export function ActivePatientsBoard() {
   const { user } = useAuth();
   const { patients, workspaceId } = useAppStore();
   const theme = workspaceTheme(workspaceId);
   const [query, setQuery] = useState("");
-  const greetingName = firstName(user?.name);
+  const greetingName = user?.name?.trim() || "Khaled Ashraf";
 
   const onBoard = useMemo(
     () =>
@@ -56,7 +51,7 @@ export function ActivePatientsBoard() {
           <div className="mt-3 flex flex-wrap items-end justify-between gap-4">
             <div className="max-w-xl">
               <h1 className="font-[family-name:var(--font-display)] text-3xl font-semibold tracking-tight text-white sm:text-[2.75rem] sm:leading-[1.15]">
-                Hello,{" "}
+                Hello, Dr.{" "}
                 <span className="italic font-medium text-white">
                   {greetingName}
                 </span>
