@@ -24,7 +24,6 @@ import {
 } from "@/components/ui";
 import { formatDate, formatDateTime } from "@/lib/format";
 import {
-  CHIEF_COMPLAINT_OPTIONS,
   CONDITION_OPTIONS,
   PRECAUTION_OPTIONS,
   TREATMENT_GOAL_OPTIONS,
@@ -60,7 +59,6 @@ export function PatientDetailView({ patientId }: { patientId: string }) {
   const [occupation, setOccupation] = useState("");
   const [condition, setCondition] = useState("");
   const [diagnosis, setDiagnosis] = useState("");
-  const [chiefComplaint, setChiefComplaint] = useState("");
   const [ptEvaluation, setPtEvaluation] = useState("");
   const [medicalHistory, setMedicalHistory] = useState("");
   const [precautions, setPrecautions] = useState("");
@@ -112,7 +110,6 @@ export function PatientDetailView({ patientId }: { patientId: string }) {
     setOccupation(patient!.occupation ?? "");
     setCondition(patient!.condition);
     setDiagnosis(patient!.diagnosis ?? "");
-    setChiefComplaint(patient!.chiefComplaint ?? "");
     setPtEvaluation(patient!.ptEvaluation ?? "");
     setMedicalHistory(patient!.medicalHistory ?? "");
     setPrecautions(patient!.precautions ?? "");
@@ -135,7 +132,6 @@ export function PatientDetailView({ patientId }: { patientId: string }) {
         occupation: occupation.trim() || "",
         condition: condition.trim(),
         diagnosis: diagnosis.trim() || "",
-        chiefComplaint: chiefComplaint.trim() || "",
         ptEvaluation: ptEvaluation.trim() || "",
         medicalHistory: medicalHistory.trim() || "",
         precautions: precautions.trim() || "",
@@ -193,7 +189,6 @@ export function PatientDetailView({ patientId }: { patientId: string }) {
             <p className="mt-1 text-stone-500">
               {patient.diagnosis ||
                 patient.condition ||
-                patient.chiefComplaint ||
                 "No diagnosis recorded yet"}
             </p>
             <div className="mt-2">
@@ -271,8 +266,8 @@ export function PatientDetailView({ patientId }: { patientId: string }) {
             </p>
 
             <PresetOrCustomField
-              label="Condition / area"
-              hint="Optional — body region or presenting issue"
+              label="Condition"
+              hint="Optional — body area or presenting issue (shows on the board)"
               value={condition}
               onChange={setCondition}
               options={CONDITION_OPTIONS}
@@ -288,14 +283,6 @@ export function PatientDetailView({ patientId }: { patientId: string }) {
                 />
               </Field>
             </div>
-            <PresetOrCustomField
-              label="Main problem"
-              hint="Optional — what brought them in"
-              value={chiefComplaint}
-              onChange={setChiefComplaint}
-              options={CHIEF_COMPLAINT_OPTIONS}
-              placeholder="What matters most to the patient…"
-            />
             <div className="rounded-2xl border border-stone-200/80 bg-white p-4">
               <Field label="PT evaluation (optional)">
                 <textarea
@@ -376,7 +363,7 @@ export function PatientDetailView({ patientId }: { patientId: string }) {
         </Surface>
       ) : (
         <div className="space-y-4">
-          {(patient.diagnosis || patient.condition || patient.chiefComplaint) && (
+          {(patient.diagnosis || patient.condition) && (
             <div
               className="rounded-2xl border border-[color:var(--accent)]/20 p-5 shadow-sm"
               style={{
@@ -388,24 +375,14 @@ export function PatientDetailView({ patientId }: { patientId: string }) {
                 Diagnosis
               </p>
               <p className="mt-1 font-[family-name:var(--font-display)] text-xl font-semibold text-stone-900">
-                {patient.diagnosis ||
-                  patient.condition ||
-                  patient.chiefComplaint}
+                {patient.diagnosis || patient.condition}
               </p>
-              <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-sm text-stone-600">
-                {patient.condition && patient.diagnosis ? (
-                  <span>
-                    <span className="text-stone-400">Area · </span>
-                    {patient.condition}
-                  </span>
-                ) : null}
-                {patient.chiefComplaint ? (
-                  <span>
-                    <span className="text-stone-400">Main problem · </span>
-                    {patient.chiefComplaint}
-                  </span>
-                ) : null}
-              </div>
+              {patient.condition && patient.diagnosis ? (
+                <p className="mt-3 text-sm text-stone-600">
+                  <span className="text-stone-400">Condition · </span>
+                  {patient.condition}
+                </p>
+              ) : null}
             </div>
           )}
 

@@ -12,7 +12,6 @@ import {
   Surface,
 } from "@/components/ui";
 import {
-  CHIEF_COMPLAINT_OPTIONS,
   CONDITION_OPTIONS,
   PRECAUTION_OPTIONS,
   TREATMENT_GOAL_OPTIONS,
@@ -35,7 +34,6 @@ export function AddPatientForm({ onCancel, onCreated }: Props) {
   const [occupation, setOccupation] = useState("");
   const [condition, setCondition] = useState("");
   const [diagnosis, setDiagnosis] = useState("");
-  const [chiefComplaint, setChiefComplaint] = useState("");
   const [ptEvaluation, setPtEvaluation] = useState("");
   const [medicalHistory, setMedicalHistory] = useState("");
   const [precautions, setPrecautions] = useState("");
@@ -54,7 +52,6 @@ export function AddPatientForm({ onCancel, onCreated }: Props) {
     setOccupation("");
     setCondition("");
     setDiagnosis("");
-    setChiefComplaint("");
     setPtEvaluation("");
     setMedicalHistory("");
     setPrecautions("");
@@ -76,7 +73,6 @@ export function AddPatientForm({ onCancel, onCreated }: Props) {
         occupation: occupation.trim() || undefined,
         condition: condition.trim(),
         diagnosis: diagnosis.trim() || undefined,
-        chiefComplaint: chiefComplaint.trim() || undefined,
         ptEvaluation: ptEvaluation.trim() || undefined,
         medicalHistory: medicalHistory.trim() || undefined,
         precautions: precautions.trim() || undefined,
@@ -175,8 +171,8 @@ export function AddPatientForm({ onCancel, onCreated }: Props) {
 
           <PresetOrCustomField
             id={`${formId}-condition`}
-            label="Condition / area"
-            hint="Optional — body region or presenting issue"
+            label="Condition"
+            hint="Optional — body area or presenting issue (shows on the board)"
             value={condition}
             onChange={setCondition}
             options={CONDITION_OPTIONS}
@@ -196,16 +192,6 @@ export function AddPatientForm({ onCancel, onCreated }: Props) {
               />
             </Field>
           </div>
-
-          <PresetOrCustomField
-            id={`${formId}-complaint`}
-            label="Main problem"
-            hint="Optional — what brought them in"
-            value={chiefComplaint}
-            onChange={setChiefComplaint}
-            options={CHIEF_COMPLAINT_OPTIONS}
-            placeholder="What matters most to the patient…"
-          />
 
           <div className="rounded-2xl border border-stone-200/80 bg-white p-4">
             <Field label="PT evaluation (optional)">

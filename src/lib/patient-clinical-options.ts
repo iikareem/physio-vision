@@ -17,19 +17,6 @@ export const CONDITION_OPTIONS = [
   "General mobility",
 ] as const;
 
-export const CHIEF_COMPLAINT_OPTIONS = [
-  "Pain with movement",
-  "Stiffness / limited ROM",
-  "Weakness",
-  "Swelling",
-  "Numbness / tingling",
-  "Difficulty walking",
-  "Difficulty with daily activities",
-  "Return to sport / work",
-  "Post-surgery recovery",
-  "Prevent re-injury",
-] as const;
-
 export const PRECAUTION_OPTIONS = [
   "Avoid heavy lifting",
   "Pain-limited range only",
