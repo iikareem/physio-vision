@@ -1,0 +1,453 @@
+"use client";
+
+import Link from "next/link";
+import { FormEvent, useEffect, useRef, useState } from "react";
+import { useAppStore } from "@/context/app-store";
+import { useHydrated } from "@/lib/use-hydrated";
+import { AddSessionForm } from "@/components/add-session-form";
+import { PatientStatusPicker } from "@/components/patient-status-picker";
+import { AppointmentStatusBadge, PatientStatusBadge } from "@/components/status-badge";
+import {
+  Field,
+  inputClass,
+  PrimaryButton,
+  SecondaryButton,
+  Surface,
+} from "@/components/ui";
+import { formatDate, formatDateTime } from "@/lib/format";
+import type { PatientStatus } from "@/lib/types";
+
+export function PatientDetailView({ patientId }: { patientId: string }) {
+  const hydrated = useHydrated();
+  const {
+    ready,
+    workspaceId,
+    getPatient,
+    getNotesForPatient,
+    getDocumentsForPatient,
+    getSessionsForPatient,
+    ensurePatientExtras,
+    updatePatient,
+    addNote,
+    addDocument,
+    downloadDocument,
+  } = useAppStore();
+
+  const patient = getPatient(patientId);
+  const notes = getNotesForPatient(patientId);
+  const documents = getDocumentsForPatient(patientId);
+  const sessions = getSessionsForPatient(patientId);
+
+  const [editing, setEditing] = useState(false);
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [condition, setCondition] = useState("");
+  const [status, setStatus] = useState<PatientStatus>("active");
+  const [referredBy, setReferredBy] = useState("");
+  const [noteBody, setNoteBody] = useState("");
+  const [docLabel, setDocLabel] = useState("");
+  const [docType, setDocType] = useState("PDF");
+  const [docFile, setDocFile] = useState<File | null>(null);
+  const [booking, setBooking] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (!ready || !patientId) return;
+    void ensurePatientExtras(patientId).catch(() => {
+      /* list views still work without extras */
+    });
+  }, [ready, patientId, ensurePatientExtras]);
+
+  if (!hydrated || !ready) {
+    return <p className="text-stone-500">Loading…</p>;
+  }
+
+  if (!patient || patient.workspaceId !== workspaceId) {
+    return (
+      <div className="space-y-3">
+        <p className="text-stone-700">
+          Patient not found in the current workspace.
+        </p>
+        <Link href="/patients" className="font-semibold text-teal-700 hover:underline">
+          Back to patients
+        </Link>
+      </div>
+    );
+  }
+
+  function startEdit() {
+    setName(patient!.name);
+    setPhone(patient!.phone ?? "");
+    setCondition(patient!.condition);
+    setStatus(patient!.status);
+    setReferredBy(patient!.referredBy ?? "");
+    setEditing(true);
+    setError(null);
+  }
+
+  async function saveEdit(e: FormEvent) {
+    e.preventDefault();
+    setBusy(true);
+    setError(null);
+    try {
+      await updatePatient(patient!.id, {
+        name: name.trim(),
+        phone: phone.trim() || undefined,
+        condition: condition.trim(),
+        status,
+        referredBy:
+          status === "transferred" ? referredBy.trim() || "" : "",
+      });
+      setEditing(false);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to save patient");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <Link
+          href="/"
+          className="text-sm font-semibold hover:underline"
+          style={{ color: "var(--accent-label)" }}
+        >
+          ← Board
+        </Link>
+        <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <h1 className="font-[family-name:var(--font-display)] text-3xl font-semibold tracking-tight text-stone-900">
+              {patient.name}
+            </h1>
+            <p className="mt-1 text-stone-500">{patient.condition}</p>
+            <div className="mt-2">
+              <PatientStatusBadge status={patient.status} />
+            </div>
+          </div>
+          {!editing && (
+            <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+              <PrimaryButton
+                onClick={() => setBooking((v) => !v)}
+                className="min-h-12 w-full px-5 text-base sm:w-auto"
+              >
+                {booking ? "Cancel booking" : "Book session"}
+              </PrimaryButton>
+              <SecondaryButton onClick={startEdit} className="min-h-12">
+                Edit profile
+              </SecondaryButton>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {error ? (
+        <p className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+          {error}
+        </p>
+      ) : null}
+
+      {booking && (
+        <AddSessionForm
+          lockedPatientId={patient.id}
+          onCancel={() => setBooking(false)}
+        />
+      )}
+
+      {editing ? (
+        <Surface className="p-5">
+          <form onSubmit={saveEdit} className="grid gap-3 sm:grid-cols-2">
+            <Field label="Full name">
+              <input
+                required
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className={inputClass}
+              />
+            </Field>
+            <Field label="Phone (optional)">
+              <input
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                inputMode="tel"
+                className={inputClass}
+              />
+            </Field>
+            <Field label="Condition / type">
+              <input
+                required
+                value={condition}
+                onChange={(e) => setCondition(e.target.value)}
+                className={inputClass}
+              />
+            </Field>
+            <div className="sm:col-span-2">
+              <p className="mb-1.5 text-sm font-medium text-stone-600">Status</p>
+              <PatientStatusPicker value={status} onChange={setStatus} />
+              {status === "transferred" ? (
+                <div className="mt-3 rounded-xl border border-sky-200 bg-sky-50/80 p-3.5">
+                  <Field label="Referring doctor — optional">
+                    <input
+                      value={referredBy}
+                      onChange={(e) => setReferredBy(e.target.value)}
+                      placeholder="Leave blank if unknown"
+                      className={inputClass}
+                    />
+                  </Field>
+                </div>
+              ) : null}
+            </div>
+            <div className="flex gap-2 sm:col-span-2">
+              <PrimaryButton type="submit" disabled={busy}>
+                {busy ? "Saving…" : "Save"}
+              </PrimaryButton>
+              <SecondaryButton type="button" onClick={() => setEditing(false)}>
+                Cancel
+              </SecondaryButton>
+            </div>
+          </form>
+        </Surface>
+      ) : (
+        <dl className="grid gap-4 rounded-2xl border border-stone-200/70 bg-white p-5 shadow-sm sm:grid-cols-3">
+          <div>
+            <dt className="text-xs font-medium uppercase tracking-wide text-stone-500">
+              Phone
+            </dt>
+            <dd className="mt-1 text-stone-800">{patient.phone || "—"}</dd>
+          </div>
+          <div>
+            <dt className="text-xs font-medium uppercase tracking-wide text-stone-500">
+              Condition
+            </dt>
+            <dd className="mt-1 text-stone-800">{patient.condition}</dd>
+          </div>
+          {patient.status === "transferred" && patient.referredBy ? (
+            <div>
+              <dt className="text-xs font-medium uppercase tracking-wide text-stone-500">
+                Referred by
+              </dt>
+              <dd className="mt-1 text-stone-800">{patient.referredBy}</dd>
+            </div>
+          ) : null}
+          <div>
+            <dt className="text-xs font-medium uppercase tracking-wide text-stone-500">
+              Patient since
+            </dt>
+            <dd className="mt-1 text-stone-800">
+              {formatDate(patient.createdAt)}
+            </dd>
+          </div>
+        </dl>
+      )}
+
+      <section className="grid gap-6 lg:grid-cols-2">
+        <Surface className="p-5">
+          <div className="flex items-center justify-between gap-2">
+            <h2 className="font-[family-name:var(--font-display)] text-lg font-semibold text-stone-900">
+              Sessions
+            </h2>
+            <Link
+              href="/sessions"
+              className="text-sm font-semibold text-teal-700 hover:underline"
+            >
+              All sessions
+            </Link>
+          </div>
+          <ul className="mt-4 divide-y divide-stone-100">
+            {sessions.length === 0 ? (
+              <li className="py-4 text-sm text-stone-500">No sessions yet.</li>
+            ) : (
+              sessions.slice(0, 8).map((s) => (
+                <li key={s.id}>
+                  <Link
+                    href={`/sessions/${s.id}`}
+                    className="flex items-center justify-between gap-3 py-3 hover:bg-stone-50/80"
+                  >
+                    <div>
+                      <p className="font-semibold text-stone-900">
+                        {formatDate(s.startsAt)}
+                      </p>
+                      <p className="text-sm text-stone-500">{s.type}</p>
+                    </div>
+                    <AppointmentStatusBadge status={s.status} />
+                  </Link>
+                </li>
+              ))
+            )}
+          </ul>
+        </Surface>
+
+        <Surface className="p-5">
+          <h2 className="font-[family-name:var(--font-display)] text-lg font-semibold text-stone-900">
+            Notes
+          </h2>
+          <form
+            className="mt-3 space-y-2"
+            onSubmit={async (e) => {
+              e.preventDefault();
+              if (!noteBody.trim() || busy) return;
+              setBusy(true);
+              setError(null);
+              try {
+                await addNote(patient.id, noteBody.trim());
+                setNoteBody("");
+              } catch (err) {
+                setError(err instanceof Error ? err.message : "Failed to add note");
+              } finally {
+                setBusy(false);
+              }
+            }}
+          >
+            <textarea
+              value={noteBody}
+              onChange={(e) => setNoteBody(e.target.value)}
+              rows={3}
+              placeholder="General patient note…"
+              className={`${inputClass} min-h-[5rem] py-3`}
+            />
+            <PrimaryButton type="submit" disabled={busy}>
+              Add note
+            </PrimaryButton>
+          </form>
+          <ul className="mt-4 space-y-3">
+            {notes.length === 0 ? (
+              <li className="text-sm text-stone-500">No notes yet.</li>
+            ) : (
+              notes.slice(0, 6).map((n) => (
+                <li
+                  key={n.id}
+                  className="rounded-xl border border-stone-100 bg-stone-50/80 px-3 py-3"
+                >
+                  <p className="whitespace-pre-wrap text-sm text-stone-800">
+                    {n.body}
+                  </p>
+                  <p className="mt-1.5 text-xs text-stone-500">
+                    {formatDateTime(n.createdAt)}
+                    {n.appointmentId ? (
+                      <>
+                        {" · "}
+                        <Link
+                          href={`/sessions/${n.appointmentId}`}
+                          className="font-medium text-teal-700 hover:underline"
+                        >
+                          Session
+                        </Link>
+                      </>
+                    ) : null}
+                  </p>
+                </li>
+              ))
+            )}
+          </ul>
+        </Surface>
+      </section>
+
+      <Surface className="p-5">
+        <h2 className="font-[family-name:var(--font-display)] text-lg font-semibold text-stone-900">
+          Documents
+        </h2>
+        <form
+          className="mt-3 grid gap-2 sm:grid-cols-[1fr_8rem_auto_auto]"
+          onSubmit={async (e) => {
+            e.preventDefault();
+            if (!docFile || busy) return;
+            setBusy(true);
+            setError(null);
+            try {
+              await addDocument({
+                patientId: patient.id,
+                file: docFile,
+                label: docLabel.trim() || docFile.name,
+                type: docType,
+              });
+              setDocLabel("");
+              setDocFile(null);
+              if (fileRef.current) fileRef.current.value = "";
+            } catch (err) {
+              setError(
+                err instanceof Error ? err.message : "Failed to upload document",
+              );
+            } finally {
+              setBusy(false);
+            }
+          }}
+        >
+          <input
+            value={docLabel}
+            onChange={(e) => setDocLabel(e.target.value)}
+            placeholder="Label (e.g. Lumbar MRI)"
+            className={inputClass}
+          />
+          <select
+            value={docType}
+            onChange={(e) => setDocType(e.target.value)}
+            className={inputClass}
+          >
+            <option>PDF</option>
+            <option>X-ray</option>
+            <option>MRI</option>
+            <option>Ultrasound</option>
+            <option>Other</option>
+          </select>
+          <input
+            ref={fileRef}
+            type="file"
+            required
+            onChange={(e) => setDocFile(e.target.files?.[0] ?? null)}
+            className="min-h-11 text-sm text-stone-600 file:mr-3 file:rounded-lg file:border-0 file:bg-stone-100 file:px-3 file:py-2 file:text-sm file:font-semibold"
+          />
+          <PrimaryButton type="submit" disabled={!docFile || busy}>
+            Upload
+          </PrimaryButton>
+        </form>
+        <ul className="mt-4 space-y-2">
+          {documents.length === 0 ? (
+            <li className="text-sm text-stone-500">No documents yet.</li>
+          ) : (
+            documents.map((d) => (
+              <li
+                key={d.id}
+                className="flex items-center justify-between gap-3 rounded-xl border border-stone-200 px-3 py-2.5 text-sm"
+              >
+                <div className="min-w-0">
+                  <p className="font-medium text-stone-800">{d.label}</p>
+                  <p className="truncate text-xs text-stone-500">
+                    {d.type} · {d.fileName} · {formatDate(d.uploadedAt)}
+                  </p>
+                </div>
+                <div className="flex shrink-0 items-center gap-2">
+                  {d.appointmentId ? (
+                    <Link
+                      href={`/sessions/${d.appointmentId}`}
+                      className="text-xs font-semibold text-teal-700 hover:underline"
+                    >
+                      Session
+                    </Link>
+                  ) : null}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      void downloadDocument(d.id).catch((err) => {
+                        setError(
+                          err instanceof Error
+                            ? err.message
+                            : "Download failed",
+                        );
+                      });
+                    }}
+                    className="text-xs font-semibold text-teal-700 hover:underline"
+                  >
+                    Download
+                  </button>
+                </div>
+              </li>
+            ))
+          )}
+        </ul>
+      </Surface>
+    </div>
+  );
+}

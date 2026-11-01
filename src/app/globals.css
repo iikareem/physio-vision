@@ -1,0 +1,128 @@
+@import "tailwindcss";
+
+:root {
+  --background: #f3f6f4;
+  --foreground: #1c2a24;
+  --surface: #ffffff;
+  --accent: #0f766e;
+  --accent-hover: #0d5f58;
+  --accent-active: #0a4f49;
+  --accent-soft: #ccfbf1;
+  --accent-label: #0f766e;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* Private workspace — blue / slate identity */
+[data-workspace="private"] {
+  --background: #f1f5f9;
+  --foreground: #0f172a;
+  --accent: #0369a1;
+  --accent-hover: #075985;
+  --accent-active: #0c4a6e;
+  --accent-soft: #e0f2fe;
+  --accent-label: #0369a1;
+}
+
+[data-workspace="clinic"] {
+  --accent: #0f766e;
+  --accent-hover: #0d5f58;
+  --accent-active: #0a4f49;
+  --accent-soft: #ccfbf1;
+  --accent-label: #0f766e;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-active: var(--accent-active);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-label: var(--accent-label);
+  --font-sans: var(--font-body);
+  --font-display: var(--font-display);
+}
+
+html {
+  -webkit-tap-highlight-color: transparent;
+  text-size-adjust: 100%;
+}
+
+body {
+  color: var(--foreground);
+  font-family: var(--font-body), system-ui, sans-serif;
+  overscroll-behavior-y: none;
+}
+
+input,
+select,
+textarea,
+button {
+  font: inherit;
+}
+
+/* Avoid iOS zoom on focus for form fields */
+@media (max-width: 767px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
+}
+
+.safe-top {
+  padding-top: var(--safe-top);
+}
+
+.safe-bottom {
+  padding-bottom: max(0.25rem, var(--safe-bottom));
+}
+
+.touch-manipulation {
+  touch-action: manipulation;
+}
+
+/* Solid filled CTA — never transparent */
+.btn-accent {
+  background-color: var(--accent) !important;
+  color: #ffffff !important;
+}
+
+.btn-accent:hover:not(:disabled) {
+  background-color: var(--accent-hover) !important;
+}
+
+.btn-accent:active:not(:disabled) {
+  background-color: var(--accent-active) !important;
+}
+
+.btn-accent:disabled {
+  opacity: 0.45;
+}
+
+/* Outlined secondary — clear border + dark label */
+.btn-secondary {
+  background-color: #ffffff !important;
+  color: #1c1917 !important;
+  border: 2px solid #a8a29e !important;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background-color: #f5f5f4 !important;
+  border-color: #78716c !important;
+}
+
+.btn-secondary:active:not(:disabled) {
+  background-color: #e7e5e4 !important;
+}
+
+.input-accent:focus {
+  --tw-ring-color: color-mix(in srgb, var(--accent) 35%, transparent);
+  border-color: color-mix(in srgb, var(--accent) 45%, #e7e5e4);
+}
+
+.link-accent {
+  color: var(--accent-label);
+  font-weight: 600;
+}
