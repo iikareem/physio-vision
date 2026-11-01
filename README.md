@@ -1,5 +1,7 @@
 # Physio Vision
 
+Built first for my brother’s physiotherapy practice — his real day-to-day patient workflow — and shared here for anyone who might need the same kind of tool.
+
 Physio Vision is a mobile-first physiotherapy workspace for managing clinic and private practice in one place. It covers today’s schedule, patient records, session notes, documents, and practice stats — built to run on a phone, tablet, or desktop, and installable as an app on the home screen.
 
 ## What it does
@@ -140,4 +142,4 @@ If the app fails to load data after login:
 
 ---
 
-Built for focused physiotherapy work — clinic floor and private practice, one clear workspace at a time.
+Made for one brother’s practice. Open for anyone who can use it.
