@@ -35,8 +35,7 @@ export function PatientsView() {
         p.name.toLowerCase().includes(q) ||
         p.condition.toLowerCase().includes(q) ||
         (p.diagnosis?.toLowerCase().includes(q) ?? false) ||
-        (p.phone?.includes(q) ?? false) ||
-        (p.email?.toLowerCase().includes(q) ?? false)
+        (p.phone?.includes(q) ?? false)
       );
     });
   }, [patients, query, statusFilter]);

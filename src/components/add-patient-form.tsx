@@ -14,7 +14,7 @@ import {
 import {
   CHIEF_COMPLAINT_OPTIONS,
   CONDITION_OPTIONS,
-  DIAGNOSIS_OPTIONS,
+  DIAGNOSIS_GROUPS,
   PRECAUTION_OPTIONS,
   TREATMENT_GOAL_OPTIONS,
 } from "@/lib/patient-clinical-options";
@@ -32,7 +32,6 @@ export function AddPatientForm({ onCancel, onCreated }: Props) {
   const { addPatient } = useAppStore();
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
-  const [email, setEmail] = useState("");
   const [dateOfBirth, setDateOfBirth] = useState("");
   const [occupation, setOccupation] = useState("");
   const [condition, setCondition] = useState("");
@@ -52,7 +51,6 @@ export function AddPatientForm({ onCancel, onCreated }: Props) {
   function resetForm() {
     setName("");
     setPhone("");
-    setEmail("");
     setDateOfBirth("");
     setOccupation("");
     setCondition("");
@@ -75,7 +73,6 @@ export function AddPatientForm({ onCancel, onCreated }: Props) {
       const created = await addPatient({
         name: name.trim(),
         phone: phone.trim() || undefined,
-        email: email.trim() || undefined,
         dateOfBirth: dateOfBirth.trim() || undefined,
         occupation: occupation.trim() || undefined,
         condition: condition.trim(),
@@ -147,18 +144,6 @@ export function AddPatientForm({ onCancel, onCreated }: Props) {
               />
             </Field>
 
-            <Field label="Email (optional)">
-              <input
-                id={`${formId}-email`}
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                autoComplete="email"
-                placeholder="patient@email.com"
-                className={inputClass}
-              />
-            </Field>
-
             <Field label="Date of birth (optional)">
               <input
                 id={`${formId}-dob`}
@@ -186,64 +171,71 @@ export function AddPatientForm({ onCancel, onCreated }: Props) {
             Physio notes
           </h3>
           <p className="text-sm text-stone-500">
-            Use the dropdown for a quick type, then edit the text freely — your
-            own wording always wins.
+            Tap a chip to fill the field, or type your own wording underneath.
           </p>
 
           <PresetOrCustomField
             id={`${formId}-condition`}
-            label="Condition / area (optional)"
+            label="Condition / area"
+            hint="Optional — body region or presenting issue"
             value={condition}
             onChange={setCondition}
             options={CONDITION_OPTIONS}
             placeholder="e.g. Left knee after fall…"
           />
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            <PresetOrCustomField
-              id={`${formId}-diagnosis`}
-              label="Working impression (optional)"
-              value={diagnosis}
-              onChange={setDiagnosis}
-              options={DIAGNOSIS_OPTIONS}
-              placeholder="Your physio impression — not a medical diagnosis"
-            />
-            <PresetOrCustomField
-              id={`${formId}-complaint`}
-              label="Main problem (optional)"
-              value={chiefComplaint}
-              onChange={setChiefComplaint}
-              options={CHIEF_COMPLAINT_OPTIONS}
-              placeholder="What brought them in…"
-            />
+          <PresetOrCustomField
+            id={`${formId}-diagnosis`}
+            label="Working diagnosis"
+            hint="Your physio impression by region — not a doctor’s medical diagnosis. Edit freely."
+            value={diagnosis}
+            onChange={setDiagnosis}
+            groups={DIAGNOSIS_GROUPS}
+            featured
+            placeholder="Type a custom impression if none of the chips fit…"
+          />
+
+          <PresetOrCustomField
+            id={`${formId}-complaint`}
+            label="Main problem"
+            hint="Optional — what brought them in"
+            value={chiefComplaint}
+            onChange={setChiefComplaint}
+            options={CHIEF_COMPLAINT_OPTIONS}
+            placeholder="What matters most to the patient…"
+          />
+
+          <div className="rounded-2xl border border-stone-200/80 bg-white p-4">
+            <Field label="PT evaluation (optional)">
+              <textarea
+                id={`${formId}-pt-eval`}
+                value={ptEvaluation}
+                onChange={(e) => setPtEvaluation(e.target.value)}
+                rows={4}
+                placeholder="ROM, strength, special tests, functional findings…"
+                className={textareaClass}
+              />
+            </Field>
           </div>
 
-          <Field label="PT evaluation (optional)">
-            <textarea
-              id={`${formId}-pt-eval`}
-              value={ptEvaluation}
-              onChange={(e) => setPtEvaluation(e.target.value)}
-              rows={4}
-              placeholder="Write findings in your own words — ROM, strength, special tests…"
-              className={textareaClass}
-            />
-          </Field>
+          <div className="rounded-2xl border border-stone-200/80 bg-white p-4">
+            <Field label="Relevant history (optional)">
+              <textarea
+                id={`${formId}-history`}
+                value={medicalHistory}
+                onChange={(e) => setMedicalHistory(e.target.value)}
+                rows={3}
+                placeholder="Past injuries, surgeries, meds — whatever matters for treatment…"
+                className={textareaClass}
+              />
+            </Field>
+          </div>
 
-          <Field label="Relevant history (optional)">
-            <textarea
-              id={`${formId}-history`}
-              value={medicalHistory}
-              onChange={(e) => setMedicalHistory(e.target.value)}
-              rows={3}
-              placeholder="Past injuries, surgeries, meds — whatever matters for treatment…"
-              className={textareaClass}
-            />
-          </Field>
-
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-4 lg:grid-cols-2">
             <PresetOrCustomField
               id={`${formId}-precautions`}
-              label="Precautions (optional)"
+              label="Precautions"
+              hint="Optional"
               value={precautions}
               onChange={setPrecautions}
               options={PRECAUTION_OPTIONS}
@@ -252,7 +244,8 @@ export function AddPatientForm({ onCancel, onCreated }: Props) {
             />
             <PresetOrCustomField
               id={`${formId}-goals`}
-              label="Treatment goals (optional)"
+              label="Treatment goals"
+              hint="Optional"
               value={treatmentGoals}
               onChange={setTreatmentGoals}
               options={TREATMENT_GOAL_OPTIONS}

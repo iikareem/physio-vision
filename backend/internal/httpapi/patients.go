@@ -51,7 +51,6 @@ type createPatientRequest struct {
 	WorkspaceID    string  `json:"workspaceId"`
 	Name           string  `json:"name"`
 	Phone          *string `json:"phone"`
-	Email          *string `json:"email"`
 	DateOfBirth    *string `json:"dateOfBirth"`
 	Occupation     *string `json:"occupation"`
 	Condition      string  `json:"condition"`
@@ -102,7 +101,6 @@ func (s *Server) handleCreatePatient(w http.ResponseWriter, r *http.Request) {
 		Workspace:      workspace,
 		Name:           req.Name,
 		Phone:          trimPtr(req.Phone),
-		Email:          trimPtr(req.Email),
 		DateOfBirth:    dob,
 		Occupation:     trimPtr(req.Occupation),
 		Condition:      strings.TrimSpace(req.Condition),
@@ -139,7 +137,6 @@ func (s *Server) handleGetPatient(w http.ResponseWriter, r *http.Request) {
 type updatePatientRequest struct {
 	Name           *string `json:"name"`
 	Phone          *string `json:"phone"`
-	Email          *string `json:"email"`
 	DateOfBirth    *string `json:"dateOfBirth"`
 	Occupation     *string `json:"occupation"`
 	Condition      *string `json:"condition"`
@@ -176,9 +173,6 @@ func (s *Server) handleUpdatePatient(w http.ResponseWriter, r *http.Request) {
 	}
 	if req.Phone != nil {
 		in.Phone = optionalTextFromPtr(req.Phone)
-	}
-	if req.Email != nil {
-		in.Email = optionalTextFromPtr(req.Email)
 	}
 	if req.Occupation != nil {
 		in.Occupation = optionalTextFromPtr(req.Occupation)

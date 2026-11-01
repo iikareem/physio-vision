@@ -30,7 +30,6 @@ export interface Patient {
   workspaceId: WorkspaceId;
   name: string;
   phone?: string;
-  email?: string;
   /** YYYY-MM-DD */
   dateOfBirth?: string;
   occupation?: string;

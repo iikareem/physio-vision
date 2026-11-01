@@ -27,7 +27,6 @@ type patientDTO struct {
 	WorkspaceID    string    `json:"workspaceId"`
 	Name           string    `json:"name"`
 	Phone          *string   `json:"phone,omitempty"`
-	Email          *string   `json:"email,omitempty"`
 	DateOfBirth    *string   `json:"dateOfBirth,omitempty"`
 	Occupation     *string   `json:"occupation,omitempty"`
 	Condition      string    `json:"condition"`
@@ -57,7 +56,6 @@ func toPatientDTO(p model.Patient) patientDTO {
 		WorkspaceID:    string(p.Workspace),
 		Name:           p.Name,
 		Phone:          p.Phone,
-		Email:          p.Email,
 		DateOfBirth:    formatDatePtr(p.DateOfBirth),
 		Occupation:     p.Occupation,
 		Condition:      p.Condition,

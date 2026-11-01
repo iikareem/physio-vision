@@ -26,7 +26,6 @@ export function createPatient(
       workspaceId: input.workspaceId,
       name: input.name,
       phone: optionalBodyField(input.phone),
-      email: optionalBodyField(input.email),
       dateOfBirth: optionalBodyField(input.dateOfBirth),
       occupation: optionalBodyField(input.occupation),
       condition: input.condition?.trim() ?? "",
@@ -44,7 +43,6 @@ export function createPatient(
 
 const CLEARABLE_KEYS = [
   "phone",
-  "email",
   "dateOfBirth",
   "occupation",
   "diagnosis",

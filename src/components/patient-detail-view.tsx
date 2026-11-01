@@ -26,7 +26,7 @@ import { formatDate, formatDateTime } from "@/lib/format";
 import {
   CHIEF_COMPLAINT_OPTIONS,
   CONDITION_OPTIONS,
-  DIAGNOSIS_OPTIONS,
+  DIAGNOSIS_GROUPS,
   PRECAUTION_OPTIONS,
   TREATMENT_GOAL_OPTIONS,
 } from "@/lib/patient-clinical-options";
@@ -57,7 +57,6 @@ export function PatientDetailView({ patientId }: { patientId: string }) {
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
-  const [email, setEmail] = useState("");
   const [dateOfBirth, setDateOfBirth] = useState("");
   const [occupation, setOccupation] = useState("");
   const [condition, setCondition] = useState("");
@@ -110,7 +109,6 @@ export function PatientDetailView({ patientId }: { patientId: string }) {
   function startEdit() {
     setName(patient!.name);
     setPhone(patient!.phone ?? "");
-    setEmail(patient!.email ?? "");
     setDateOfBirth(patient!.dateOfBirth ?? "");
     setOccupation(patient!.occupation ?? "");
     setCondition(patient!.condition);
@@ -134,7 +132,6 @@ export function PatientDetailView({ patientId }: { patientId: string }) {
       await updatePatient(patient!.id, {
         name: name.trim(),
         phone: phone.trim() || "",
-        email: email.trim() || "",
         dateOfBirth: dateOfBirth.trim() || "",
         occupation: occupation.trim() || "",
         condition: condition.trim(),
@@ -195,10 +192,10 @@ export function PatientDetailView({ patientId }: { patientId: string }) {
               {patient.name}
             </h1>
             <p className="mt-1 text-stone-500">
-              {patient.condition ||
-                patient.diagnosis ||
+              {patient.diagnosis ||
+                patient.condition ||
                 patient.chiefComplaint ||
-                "No condition recorded"}
+                "No diagnosis recorded yet"}
             </p>
             <div className="mt-2">
               <PatientStatusBadge status={patient.status} />
@@ -253,14 +250,6 @@ export function PatientDetailView({ patientId }: { patientId: string }) {
                   className={inputClass}
                 />
               </Field>
-              <Field label="Email (optional)">
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className={inputClass}
-                />
-              </Field>
               <Field label="Date of birth (optional)">
                 <input
                   type="date"
@@ -279,53 +268,60 @@ export function PatientDetailView({ patientId }: { patientId: string }) {
             </div>
 
             <p className="text-sm text-stone-500">
-              Physio notes — quick-pick a type or write freely in your own words.
+              Tap a chip to fill a field, or type your own wording underneath.
             </p>
 
             <PresetOrCustomField
-              label="Condition / area (optional)"
+              label="Condition / area"
+              hint="Optional — body region or presenting issue"
               value={condition}
               onChange={setCondition}
               options={CONDITION_OPTIONS}
               placeholder="e.g. Left knee after fall…"
             />
-            <div className="grid gap-3 sm:grid-cols-2">
-              <PresetOrCustomField
-                label="Working impression (optional)"
-                value={diagnosis}
-                onChange={setDiagnosis}
-                options={DIAGNOSIS_OPTIONS}
-                placeholder="Your physio impression — not a medical diagnosis"
-              />
-              <PresetOrCustomField
-                label="Main problem (optional)"
-                value={chiefComplaint}
-                onChange={setChiefComplaint}
-                options={CHIEF_COMPLAINT_OPTIONS}
-                placeholder="What brought them in…"
-              />
+            <PresetOrCustomField
+              label="Working diagnosis"
+              hint="Your physio impression by region — not a doctor’s medical diagnosis."
+              value={diagnosis}
+              onChange={setDiagnosis}
+              groups={DIAGNOSIS_GROUPS}
+              featured
+              placeholder="Type a custom impression if none of the chips fit…"
+            />
+            <PresetOrCustomField
+              label="Main problem"
+              hint="Optional — what brought them in"
+              value={chiefComplaint}
+              onChange={setChiefComplaint}
+              options={CHIEF_COMPLAINT_OPTIONS}
+              placeholder="What matters most to the patient…"
+            />
+            <div className="rounded-2xl border border-stone-200/80 bg-white p-4">
+              <Field label="PT evaluation (optional)">
+                <textarea
+                  value={ptEvaluation}
+                  onChange={(e) => setPtEvaluation(e.target.value)}
+                  rows={4}
+                  placeholder="ROM, strength, special tests, functional findings…"
+                  className={`${inputClass} min-h-[5.5rem] py-3`}
+                />
+              </Field>
             </div>
-            <Field label="PT evaluation (optional)">
-              <textarea
-                value={ptEvaluation}
-                onChange={(e) => setPtEvaluation(e.target.value)}
-                rows={4}
-                placeholder="Findings in your own words…"
-                className={`${inputClass} min-h-[5.5rem] py-3`}
-              />
-            </Field>
-            <Field label="Relevant history (optional)">
-              <textarea
-                value={medicalHistory}
-                onChange={(e) => setMedicalHistory(e.target.value)}
-                rows={3}
-                placeholder="Past injuries, surgeries, meds…"
-                className={`${inputClass} min-h-[5rem] py-3`}
-              />
-            </Field>
-            <div className="grid gap-3 sm:grid-cols-2">
+            <div className="rounded-2xl border border-stone-200/80 bg-white p-4">
+              <Field label="Relevant history (optional)">
+                <textarea
+                  value={medicalHistory}
+                  onChange={(e) => setMedicalHistory(e.target.value)}
+                  rows={3}
+                  placeholder="Past injuries, surgeries, meds…"
+                  className={`${inputClass} min-h-[5rem] py-3`}
+                />
+              </Field>
+            </div>
+            <div className="grid gap-3 lg:grid-cols-2">
               <PresetOrCustomField
-                label="Precautions (optional)"
+                label="Precautions"
+                hint="Optional"
                 value={precautions}
                 onChange={setPrecautions}
                 options={PRECAUTION_OPTIONS}
@@ -333,7 +329,8 @@ export function PatientDetailView({ patientId }: { patientId: string }) {
                 multiline
               />
               <PresetOrCustomField
-                label="Treatment goals (optional)"
+                label="Treatment goals"
+                hint="Optional"
                 value={treatmentGoals}
                 onChange={setTreatmentGoals}
                 options={TREATMENT_GOAL_OPTIONS}
@@ -379,18 +376,45 @@ export function PatientDetailView({ patientId }: { patientId: string }) {
         </Surface>
       ) : (
         <div className="space-y-4">
+          {(patient.diagnosis || patient.condition || patient.chiefComplaint) && (
+            <div
+              className="rounded-2xl border border-[color:var(--accent)]/20 p-5 shadow-sm"
+              style={{
+                background:
+                  "linear-gradient(160deg, color-mix(in srgb, var(--accent-soft) 70%, white), white 70%)",
+              }}
+            >
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-[color:var(--accent-label)]">
+                Working diagnosis
+              </p>
+              <p className="mt-1 font-[family-name:var(--font-display)] text-xl font-semibold text-stone-900">
+                {patient.diagnosis ||
+                  patient.condition ||
+                  patient.chiefComplaint}
+              </p>
+              <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-sm text-stone-600">
+                {patient.condition && patient.diagnosis ? (
+                  <span>
+                    <span className="text-stone-400">Area · </span>
+                    {patient.condition}
+                  </span>
+                ) : null}
+                {patient.chiefComplaint ? (
+                  <span>
+                    <span className="text-stone-400">Main problem · </span>
+                    {patient.chiefComplaint}
+                  </span>
+                ) : null}
+              </div>
+            </div>
+          )}
+
           <dl className="grid gap-4 rounded-2xl border border-stone-200/70 bg-white p-5 shadow-sm sm:grid-cols-3">
             <div>
               <dt className="text-xs font-medium uppercase tracking-wide text-stone-500">
                 Phone
               </dt>
               <dd className="mt-1 text-stone-800">{patient.phone || "—"}</dd>
-            </div>
-            <div>
-              <dt className="text-xs font-medium uppercase tracking-wide text-stone-500">
-                Email
-              </dt>
-              <dd className="mt-1 text-stone-800">{patient.email || "—"}</dd>
             </div>
             <div>
               <dt className="text-xs font-medium uppercase tracking-wide text-stone-500">
@@ -408,30 +432,6 @@ export function PatientDetailView({ patientId }: { patientId: string }) {
               </dt>
               <dd className="mt-1 text-stone-800">
                 {patient.occupation || "—"}
-              </dd>
-            </div>
-            <div>
-              <dt className="text-xs font-medium uppercase tracking-wide text-stone-500">
-                Condition
-              </dt>
-              <dd className="mt-1 text-stone-800">
-                {patient.condition || "—"}
-              </dd>
-            </div>
-            <div>
-              <dt className="text-xs font-medium uppercase tracking-wide text-stone-500">
-                Working impression
-              </dt>
-              <dd className="mt-1 text-stone-800">
-                {patient.diagnosis || "—"}
-              </dd>
-            </div>
-            <div className="sm:col-span-3">
-              <dt className="text-xs font-medium uppercase tracking-wide text-stone-500">
-                Main problem
-              </dt>
-              <dd className="mt-1 text-stone-800">
-                {patient.chiefComplaint || "—"}
               </dd>
             </div>
             {patient.status === "transferred" && patient.referredBy ? (

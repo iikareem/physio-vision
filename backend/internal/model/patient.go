@@ -33,7 +33,6 @@ type Patient struct {
 	Workspace       Workspace
 	Name            string
 	Phone           *string
-	Email           *string
 	DateOfBirth     *time.Time
 	Occupation      *string
 	Condition       string
