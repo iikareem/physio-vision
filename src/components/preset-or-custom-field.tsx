@@ -15,34 +15,9 @@ type Props = {
   rows?: number;
 };
 
-function Chip({
-  label,
-  selected,
-  onSelect,
-}: {
-  label: string;
-  selected: boolean;
-  onSelect: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onSelect}
-      aria-pressed={selected}
-      className={`min-h-9 touch-manipulation rounded-full px-3 text-left text-sm font-semibold transition ${
-        selected
-          ? "btn-accent shadow-sm"
-          : "border border-stone-200 bg-white text-stone-700 hover:border-stone-300 hover:bg-stone-50"
-      }`}
-    >
-      {label}
-    </button>
-  );
-}
-
 /**
- * Physio-friendly field: tap a common type, or type anything.
- * Stored value is always free text — chips only help fill it in.
+ * Physio-friendly field: pick from a dropdown, or type a custom value.
+ * Stored value is always free text — the list only helps fill it in.
  */
 export function PresetOrCustomField({
   id: idProp,
@@ -57,18 +32,17 @@ export function PresetOrCustomField({
 }: Props) {
   const autoId = useId();
   const fieldId = idProp ?? autoId;
-  const isCustom = Boolean(value) && !options.includes(value);
-
-  function toggle(option: string) {
-    onChange(value === option ? "" : option);
-  }
+  const selectId = `${fieldId}-select`;
+  const matched = options.includes(value);
+  const selectValue = matched ? value : "";
+  const isCustom = Boolean(value) && !matched;
 
   return (
     <div className="rounded-2xl border border-stone-200/80 bg-stone-50/60 p-4">
       <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
         <div>
           <label
-            htmlFor={fieldId}
+            htmlFor={selectId}
             className="block text-sm font-semibold text-stone-800"
           >
             {label}
@@ -88,16 +62,22 @@ export function PresetOrCustomField({
         ) : null}
       </div>
 
-      <div className="flex flex-wrap gap-1.5">
+      <select
+        id={selectId}
+        aria-label={`${label} list`}
+        value={selectValue}
+        onChange={(e) => onChange(e.target.value)}
+        className={`${inputClass} bg-white`}
+      >
+        <option value="">
+          {isCustom ? "Custom (edit below)" : "Choose from list…"}
+        </option>
         {options.map((option) => (
-          <Chip
-            key={option}
-            label={option}
-            selected={value === option}
-            onSelect={() => toggle(option)}
-          />
+          <option key={option} value={option}>
+            {option}
+          </option>
         ))}
-      </div>
+      </select>
 
       <div className="mt-3">
         {multiline ? (
