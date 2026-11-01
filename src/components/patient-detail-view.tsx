@@ -26,7 +26,6 @@ import { formatDate, formatDateTime } from "@/lib/format";
 import {
   CHIEF_COMPLAINT_OPTIONS,
   CONDITION_OPTIONS,
-  DIAGNOSIS_GROUPS,
   PRECAUTION_OPTIONS,
   TREATMENT_GOAL_OPTIONS,
 } from "@/lib/patient-clinical-options";
@@ -279,15 +278,16 @@ export function PatientDetailView({ patientId }: { patientId: string }) {
               options={CONDITION_OPTIONS}
               placeholder="e.g. Left knee after fall…"
             />
-            <PresetOrCustomField
-              label="Working diagnosis"
-              hint="Your physio impression by region — not a doctor’s medical diagnosis."
-              value={diagnosis}
-              onChange={setDiagnosis}
-              groups={DIAGNOSIS_GROUPS}
-              featured
-              placeholder="Type a custom impression if none of the chips fit…"
-            />
+            <div className="rounded-2xl border border-[color:var(--accent)]/25 bg-[color:var(--accent-soft)]/40 p-4">
+              <Field label="Diagnosis (optional)">
+                <input
+                  value={diagnosis}
+                  onChange={(e) => setDiagnosis(e.target.value)}
+                  placeholder="Type the diagnosis…"
+                  className={`${inputClass} bg-white`}
+                />
+              </Field>
+            </div>
             <PresetOrCustomField
               label="Main problem"
               hint="Optional — what brought them in"
@@ -385,7 +385,7 @@ export function PatientDetailView({ patientId }: { patientId: string }) {
               }}
             >
               <p className="text-[11px] font-semibold uppercase tracking-wide text-[color:var(--accent-label)]">
-                Working diagnosis
+                Diagnosis
               </p>
               <p className="mt-1 font-[family-name:var(--font-display)] text-xl font-semibold text-stone-900">
                 {patient.diagnosis ||

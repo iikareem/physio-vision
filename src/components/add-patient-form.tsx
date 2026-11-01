@@ -14,7 +14,6 @@ import {
 import {
   CHIEF_COMPLAINT_OPTIONS,
   CONDITION_OPTIONS,
-  DIAGNOSIS_GROUPS,
   PRECAUTION_OPTIONS,
   TREATMENT_GOAL_OPTIONS,
 } from "@/lib/patient-clinical-options";
@@ -184,16 +183,19 @@ export function AddPatientForm({ onCancel, onCreated }: Props) {
             placeholder="e.g. Left knee after fall…"
           />
 
-          <PresetOrCustomField
-            id={`${formId}-diagnosis`}
-            label="Working diagnosis"
-            hint="Your physio impression by region — not a doctor’s medical diagnosis. Edit freely."
-            value={diagnosis}
-            onChange={setDiagnosis}
-            groups={DIAGNOSIS_GROUPS}
-            featured
-            placeholder="Type a custom impression if none of the chips fit…"
-          />
+          <div
+            className="rounded-2xl border border-[color:var(--accent)]/25 bg-[color:var(--accent-soft)]/40 p-4"
+          >
+            <Field label="Diagnosis (optional)">
+              <input
+                id={`${formId}-diagnosis`}
+                value={diagnosis}
+                onChange={(e) => setDiagnosis(e.target.value)}
+                placeholder="Type the diagnosis…"
+                className={`${inputClass} bg-white`}
+              />
+            </Field>
+          </div>
 
           <PresetOrCustomField
             id={`${formId}-complaint`}
