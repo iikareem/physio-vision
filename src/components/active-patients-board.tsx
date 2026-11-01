@@ -47,14 +47,6 @@ export function ActivePatientsBoard() {
       <div
         className={`relative overflow-hidden bg-gradient-to-br px-5 py-7 sm:px-8 sm:py-8 ${theme.hero}`}
       >
-        <div
-          className="pointer-events-none absolute -right-16 -top-20 h-56 w-56 rounded-full bg-white/10 blur-2xl"
-          aria-hidden
-        />
-        <div
-          className="pointer-events-none absolute -bottom-24 left-10 h-48 w-48 rounded-full bg-black/10 blur-2xl"
-          aria-hidden
-        />
         <div className="relative">
           <p
             className={`text-xs font-semibold uppercase tracking-[0.16em] ${theme.heroMuted}`}
@@ -65,7 +57,7 @@ export function ActivePatientsBoard() {
             <div className="max-w-xl">
               <h1 className="font-[family-name:var(--font-display)] text-3xl font-semibold tracking-tight text-white sm:text-[2.75rem] sm:leading-[1.15]">
                 Hello,{" "}
-                <span className="italic font-medium text-white/95">
+                <span className="italic font-medium text-white">
                   {greetingName}
                 </span>
               </h1>

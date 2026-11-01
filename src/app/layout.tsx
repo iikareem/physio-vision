@@ -23,7 +23,8 @@ export const metadata: Metadata = {
   applicationName: "Physio Vision",
   appleWebApp: {
     capable: true,
-    statusBarStyle: "black-translucent",
+    // Opaque status bar — avoids the frosted/blur strip under the notch in PWA.
+    statusBarStyle: "black",
     title: "Physio Vision",
   },
   formatDetection: {

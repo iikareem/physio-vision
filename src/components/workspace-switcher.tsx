@@ -28,7 +28,7 @@ export function WorkspaceSwitcher({ compact = false }: { compact?: boolean }) {
 
   return (
     <div
-      className={`relative grid grid-cols-2 rounded-2xl p-1 ring-1 backdrop-blur-sm ${theme.switcherTrack} ${
+      className={`relative grid grid-cols-2 rounded-2xl p-1 ring-1 ${theme.switcherTrack} ${
         compact ? "min-w-[11.5rem] shrink-0" : "w-full"
       }`}
       role="group"
