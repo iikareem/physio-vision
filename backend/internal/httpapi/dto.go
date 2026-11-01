@@ -23,28 +23,54 @@ func toUserDTO(u model.User) userDTO {
 }
 
 type patientDTO struct {
-	ID          string    `json:"id"`
-	WorkspaceID string    `json:"workspaceId"`
-	Name        string    `json:"name"`
-	Phone       *string   `json:"phone,omitempty"`
-	Condition   string    `json:"condition"`
-	Status      string    `json:"status"`
-	ReferredBy  *string   `json:"referredBy,omitempty"`
-	CreatedAt   time.Time `json:"createdAt"`
-	UpdatedAt   time.Time `json:"updatedAt"`
+	ID             string    `json:"id"`
+	WorkspaceID    string    `json:"workspaceId"`
+	Name           string    `json:"name"`
+	Phone          *string   `json:"phone,omitempty"`
+	Email          *string   `json:"email,omitempty"`
+	DateOfBirth    *string   `json:"dateOfBirth,omitempty"`
+	Occupation     *string   `json:"occupation,omitempty"`
+	Condition      string    `json:"condition"`
+	Diagnosis      *string   `json:"diagnosis,omitempty"`
+	ChiefComplaint *string   `json:"chiefComplaint,omitempty"`
+	PTEvaluation   *string   `json:"ptEvaluation,omitempty"`
+	MedicalHistory *string   `json:"medicalHistory,omitempty"`
+	Precautions    *string   `json:"precautions,omitempty"`
+	TreatmentGoals *string   `json:"treatmentGoals,omitempty"`
+	Status         string    `json:"status"`
+	ReferredBy     *string   `json:"referredBy,omitempty"`
+	CreatedAt      time.Time `json:"createdAt"`
+	UpdatedAt      time.Time `json:"updatedAt"`
+}
+
+func formatDatePtr(t *time.Time) *string {
+	if t == nil {
+		return nil
+	}
+	s := t.Format("2006-01-02")
+	return &s
 }
 
 func toPatientDTO(p model.Patient) patientDTO {
 	return patientDTO{
-		ID:          p.ID,
-		WorkspaceID: string(p.Workspace),
-		Name:        p.Name,
-		Phone:       p.Phone,
-		Condition:   p.Condition,
-		Status:      string(p.Status),
-		ReferredBy:  p.ReferredBy,
-		CreatedAt:   p.CreatedAt,
-		UpdatedAt:   p.UpdatedAt,
+		ID:             p.ID,
+		WorkspaceID:    string(p.Workspace),
+		Name:           p.Name,
+		Phone:          p.Phone,
+		Email:          p.Email,
+		DateOfBirth:    formatDatePtr(p.DateOfBirth),
+		Occupation:     p.Occupation,
+		Condition:      p.Condition,
+		Diagnosis:      p.Diagnosis,
+		ChiefComplaint: p.ChiefComplaint,
+		PTEvaluation:   p.PTEvaluation,
+		MedicalHistory: p.MedicalHistory,
+		Precautions:    p.Precautions,
+		TreatmentGoals: p.TreatmentGoals,
+		Status:         string(p.Status),
+		ReferredBy:     p.ReferredBy,
+		CreatedAt:      p.CreatedAt,
+		UpdatedAt:      p.UpdatedAt,
 	}
 }
 

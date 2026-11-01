@@ -157,7 +157,9 @@ export function SessionsView() {
                   key={session.id}
                   session={session}
                   patientName={patient?.name ?? "Unknown patient"}
-                  condition={patient?.condition}
+                  condition={
+                    patient?.condition || patient?.diagnosis || undefined
+                  }
                 />
               );
             })
@@ -182,7 +184,9 @@ export function SessionsView() {
                   key={session.id}
                   session={session}
                   patientName={patient?.name ?? "Unknown patient"}
-                  condition={patient?.condition}
+                  condition={
+                    patient?.condition || patient?.diagnosis || undefined
+                  }
                 />
               );
             })}
@@ -211,7 +215,9 @@ export function SessionsView() {
                   key={session.id}
                   session={session}
                   patientName={patient?.name ?? "Unknown patient"}
-                  condition={patient?.condition}
+                  condition={
+                    patient?.condition || patient?.diagnosis || undefined
+                  }
                 />
               );
             })

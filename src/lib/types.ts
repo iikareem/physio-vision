@@ -30,13 +30,29 @@ export interface Patient {
   workspaceId: WorkspaceId;
   name: string;
   phone?: string;
+  email?: string;
+  /** YYYY-MM-DD */
+  dateOfBirth?: string;
+  occupation?: string;
   condition: string;
+  diagnosis?: string;
+  chiefComplaint?: string;
+  ptEvaluation?: string;
+  medicalHistory?: string;
+  precautions?: string;
+  treatmentGoals?: string;
   status: PatientStatus;
   /** Referring doctor when status is transferred (referred in). */
   referredBy?: string;
   createdAt: string;
   updatedAt?: string;
 }
+
+/** Fields editable on create / profile update (everything except identity). */
+export type PatientProfileInput = Omit<
+  Patient,
+  "id" | "workspaceId" | "createdAt" | "updatedAt"
+>;
 
 export interface Note {
   id: string;

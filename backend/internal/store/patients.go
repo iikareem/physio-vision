@@ -5,11 +5,18 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/jackc/pgx/v5"
 
 	"physio-vision/backend/internal/model"
 )
+
+const patientSelectCols = `
+	id, owner_id, workspace, name, phone, email, date_of_birth, occupation,
+	condition, diagnosis, chief_complaint, pt_evaluation, medical_history,
+	precautions, treatment_goals, status, referred_by, created_at, updated_at
+`
 
 type ListPatientsFilter struct {
 	Workspace model.Workspace
@@ -20,11 +27,11 @@ type ListPatientsFilter struct {
 func (s *Store) ListPatients(ctx context.Context, ownerID string, f ListPatientsFilter) ([]model.Patient, error) {
 	var b strings.Builder
 	args := []any{ownerID, string(f.Workspace)}
-	b.WriteString(`
-		SELECT id, owner_id, workspace, name, phone, condition, status, referred_by, created_at, updated_at
+	fmt.Fprintf(&b, `
+		SELECT %s
 		FROM patients
 		WHERE owner_id = $1 AND workspace = $2
-	`)
+	`, patientSelectCols)
 	if f.BoardOnly {
 		b.WriteString(` AND status IN ('active', 'transferred')`)
 	} else if f.Status != nil {
@@ -51,11 +58,11 @@ func (s *Store) ListPatients(ctx context.Context, ownerID string, f ListPatients
 }
 
 func (s *Store) GetPatient(ctx context.Context, ownerID, id string) (*model.Patient, error) {
-	const q = `
-		SELECT id, owner_id, workspace, name, phone, condition, status, referred_by, created_at, updated_at
+	q := fmt.Sprintf(`
+		SELECT %s
 		FROM patients
 		WHERE owner_id = $1 AND id = $2
-	`
+	`, patientSelectCols)
 	row := s.pool.QueryRow(ctx, q, ownerID, id)
 	p, err := scanPatient(row)
 	if errors.Is(err, pgx.ErrNoRows) {
@@ -68,22 +75,40 @@ func (s *Store) GetPatient(ctx context.Context, ownerID, id string) (*model.Pati
 }
 
 type CreatePatientInput struct {
-	Workspace  model.Workspace
-	Name       string
-	Phone      *string
-	Condition  string
-	Status     model.PatientStatus
-	ReferredBy *string
+	Workspace      model.Workspace
+	Name           string
+	Phone          *string
+	Email          *string
+	DateOfBirth    *time.Time
+	Occupation     *string
+	Condition      string
+	Diagnosis      *string
+	ChiefComplaint *string
+	PTEvaluation   *string
+	MedicalHistory *string
+	Precautions    *string
+	TreatmentGoals *string
+	Status         model.PatientStatus
+	ReferredBy     *string
 }
 
 func (s *Store) CreatePatient(ctx context.Context, ownerID string, in CreatePatientInput) (*model.Patient, error) {
 	const q = `
-		INSERT INTO patients (owner_id, workspace, name, phone, condition, status, referred_by)
-		VALUES ($1, $2, $3, $4, $5, $6, $7)
-		RETURNING id, owner_id, workspace, name, phone, condition, status, referred_by, created_at, updated_at
-	`
+		INSERT INTO patients (
+			owner_id, workspace, name, phone, email, date_of_birth, occupation,
+			condition, diagnosis, chief_complaint, pt_evaluation, medical_history,
+			precautions, treatment_goals, status, referred_by
+		)
+		VALUES (
+			$1, $2, $3, $4, $5, $6, $7,
+			$8, $9, $10, $11, $12,
+			$13, $14, $15, $16
+		)
+		RETURNING ` + patientSelectCols
 	row := s.pool.QueryRow(ctx, q,
-		ownerID, string(in.Workspace), in.Name, in.Phone, in.Condition, string(in.Status), in.ReferredBy,
+		ownerID, string(in.Workspace), in.Name, in.Phone, in.Email, in.DateOfBirth, in.Occupation,
+		in.Condition, in.Diagnosis, in.ChiefComplaint, in.PTEvaluation, in.MedicalHistory,
+		in.Precautions, in.TreatmentGoals, string(in.Status), in.ReferredBy,
 	)
 	p, err := scanPatient(row)
 	if err != nil {
@@ -92,14 +117,48 @@ func (s *Store) CreatePatient(ctx context.Context, ownerID string, in CreatePati
 	return &p, nil
 }
 
+// OptionalText is a patch for a nullable text column.
+// Set=false leaves the existing value; Set=true writes Value (nil clears).
+type OptionalText struct {
+	Set   bool
+	Value *string
+}
+
+// OptionalDate is a patch for a nullable date column.
+type OptionalDate struct {
+	Set   bool
+	Value *time.Time
+}
+
 type UpdatePatientInput struct {
-	Name       *string
-	Phone      *string
-	ClearPhone bool
-	Condition  *string
-	Status     *model.PatientStatus
-	ReferredBy *string
-	ClearRef   bool
+	Name           *string
+	Phone          OptionalText
+	Email          OptionalText
+	DateOfBirth    OptionalDate
+	Occupation     OptionalText
+	Condition      *string
+	Diagnosis      OptionalText
+	ChiefComplaint OptionalText
+	PTEvaluation   OptionalText
+	MedicalHistory OptionalText
+	Precautions    OptionalText
+	TreatmentGoals OptionalText
+	Status         *model.PatientStatus
+	ReferredBy     OptionalText
+}
+
+func applyOptionalText(existing *string, patch OptionalText) *string {
+	if !patch.Set {
+		return existing
+	}
+	return patch.Value
+}
+
+func applyOptionalDate(existing *time.Time, patch OptionalDate) *time.Time {
+	if !patch.Set {
+		return existing
+	}
+	return patch.Value
 }
 
 func (s *Store) UpdatePatient(ctx context.Context, ownerID, id string, in UpdatePatientInput) (*model.Patient, error) {
@@ -112,12 +171,6 @@ func (s *Store) UpdatePatient(ctx context.Context, ownerID, id string, in Update
 	if in.Name != nil {
 		name = *in.Name
 	}
-	phone := existing.Phone
-	if in.ClearPhone {
-		phone = nil
-	} else if in.Phone != nil {
-		phone = in.Phone
-	}
 	condition := existing.Condition
 	if in.Condition != nil {
 		condition = *in.Condition
@@ -126,25 +179,43 @@ func (s *Store) UpdatePatient(ctx context.Context, ownerID, id string, in Update
 	if in.Status != nil {
 		status = *in.Status
 	}
-	ref := existing.ReferredBy
-	if in.ClearRef {
-		ref = nil
-	} else if in.ReferredBy != nil {
-		ref = in.ReferredBy
-	}
+
+	phone := applyOptionalText(existing.Phone, in.Phone)
+	email := applyOptionalText(existing.Email, in.Email)
+	dob := applyOptionalDate(existing.DateOfBirth, in.DateOfBirth)
+	occupation := applyOptionalText(existing.Occupation, in.Occupation)
+	diagnosis := applyOptionalText(existing.Diagnosis, in.Diagnosis)
+	chief := applyOptionalText(existing.ChiefComplaint, in.ChiefComplaint)
+	ptEval := applyOptionalText(existing.PTEvaluation, in.PTEvaluation)
+	history := applyOptionalText(existing.MedicalHistory, in.MedicalHistory)
+	precautions := applyOptionalText(existing.Precautions, in.Precautions)
+	goals := applyOptionalText(existing.TreatmentGoals, in.TreatmentGoals)
+	ref := applyOptionalText(existing.ReferredBy, in.ReferredBy)
 
 	const q = `
 		UPDATE patients
 		SET name = $3,
 		    phone = $4,
-		    condition = $5,
-		    status = $6,
-		    referred_by = $7,
+		    email = $5,
+		    date_of_birth = $6,
+		    occupation = $7,
+		    condition = $8,
+		    diagnosis = $9,
+		    chief_complaint = $10,
+		    pt_evaluation = $11,
+		    medical_history = $12,
+		    precautions = $13,
+		    treatment_goals = $14,
+		    status = $15,
+		    referred_by = $16,
 		    updated_at = now()
 		WHERE owner_id = $1 AND id = $2
-		RETURNING id, owner_id, workspace, name, phone, condition, status, referred_by, created_at, updated_at
-	`
-	row := s.pool.QueryRow(ctx, q, ownerID, id, name, phone, condition, string(status), ref)
+		RETURNING ` + patientSelectCols
+	row := s.pool.QueryRow(ctx, q,
+		ownerID, id, name, phone, email, dob, occupation,
+		condition, diagnosis, chief, ptEval, history,
+		precautions, goals, string(status), ref,
+	)
 	p, err := scanPatient(row)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, ErrNotFound
@@ -163,8 +234,9 @@ func scanPatient(row patientScanner) (model.Patient, error) {
 	var p model.Patient
 	var workspace, status string
 	err := row.Scan(
-		&p.ID, &p.OwnerID, &workspace, &p.Name, &p.Phone, &p.Condition,
-		&status, &p.ReferredBy, &p.CreatedAt, &p.UpdatedAt,
+		&p.ID, &p.OwnerID, &workspace, &p.Name, &p.Phone, &p.Email, &p.DateOfBirth, &p.Occupation,
+		&p.Condition, &p.Diagnosis, &p.ChiefComplaint, &p.PTEvaluation, &p.MedicalHistory,
+		&p.Precautions, &p.TreatmentGoals, &status, &p.ReferredBy, &p.CreatedAt, &p.UpdatedAt,
 	)
 	if err != nil {
 		return model.Patient{}, err

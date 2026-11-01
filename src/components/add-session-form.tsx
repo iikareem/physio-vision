@@ -113,7 +113,11 @@ export function AddSessionForm({
             <p className="mt-0.5 font-semibold text-stone-900">
               {lockedPatient.name}
             </p>
-            <p className="text-sm text-stone-500">{lockedPatient.condition}</p>
+            <p className="text-sm text-stone-500">
+              {lockedPatient.condition ||
+                lockedPatient.diagnosis ||
+                "No condition"}
+            </p>
           </div>
         ) : (
           <Field label="Patient">

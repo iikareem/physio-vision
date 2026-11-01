@@ -31,6 +31,7 @@ export function ActivePatientsBoard() {
       (p) =>
         p.name.toLowerCase().includes(q) ||
         p.condition.toLowerCase().includes(q) ||
+        (p.diagnosis?.toLowerCase().includes(q) ?? false) ||
         (p.phone?.includes(q) ?? false),
     );
   }, [onBoard, query]);
@@ -140,7 +141,9 @@ export function ActivePatientsBoard() {
                       ) : null}
                     </span>
                     <span className="mt-0.5 block truncate text-sm text-stone-500">
-                      {patient.condition}
+                      {patient.condition ||
+                        patient.diagnosis ||
+                        "No condition"}
                     </span>
                   </span>
                   <span

@@ -28,14 +28,23 @@ func (s PatientStatus) OnBoard() bool {
 
 // Patient is a person under care in one workspace.
 type Patient struct {
-	ID         string
-	OwnerID    string
-	Workspace  Workspace
-	Name       string
-	Phone      *string
-	Condition  string
-	Status     PatientStatus
-	ReferredBy *string // set when Status is transferred
-	CreatedAt  time.Time
-	UpdatedAt  time.Time
+	ID              string
+	OwnerID         string
+	Workspace       Workspace
+	Name            string
+	Phone           *string
+	Email           *string
+	DateOfBirth     *time.Time
+	Occupation      *string
+	Condition       string
+	Diagnosis       *string
+	ChiefComplaint  *string
+	PTEvaluation    *string
+	MedicalHistory  *string
+	Precautions     *string
+	TreatmentGoals  *string
+	Status          PatientStatus
+	ReferredBy      *string // optional when Status is transferred
+	CreatedAt       time.Time
+	UpdatedAt       time.Time
 }

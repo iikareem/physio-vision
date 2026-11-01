@@ -85,7 +85,7 @@ export function PatientPicker({
               {selected.name}
             </p>
             <p className="truncate text-xs text-stone-500">
-              {selected.condition}
+              {selected.condition || selected.diagnosis || "No condition"}
               {selected.phone ? ` · ${selected.phone}` : ""}
             </p>
           </div>
@@ -177,7 +177,7 @@ export function PatientPicker({
                         ) : null}
                       </span>
                       <span className="text-xs text-stone-500">
-                        {p.condition}
+                        {p.condition || p.diagnosis || "No condition"}
                         {p.phone ? ` · ${p.phone}` : ""}
                       </span>
                     </button>

@@ -49,7 +49,16 @@ export function PatientDetailView({ patientId }: { patientId: string }) {
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
+  const [dateOfBirth, setDateOfBirth] = useState("");
+  const [occupation, setOccupation] = useState("");
   const [condition, setCondition] = useState("");
+  const [diagnosis, setDiagnosis] = useState("");
+  const [chiefComplaint, setChiefComplaint] = useState("");
+  const [ptEvaluation, setPtEvaluation] = useState("");
+  const [medicalHistory, setMedicalHistory] = useState("");
+  const [precautions, setPrecautions] = useState("");
+  const [treatmentGoals, setTreatmentGoals] = useState("");
   const [status, setStatus] = useState<PatientStatus>("active");
   const [referredBy, setReferredBy] = useState("");
   const [noteBody, setNoteBody] = useState("");
@@ -93,7 +102,16 @@ export function PatientDetailView({ patientId }: { patientId: string }) {
   function startEdit() {
     setName(patient!.name);
     setPhone(patient!.phone ?? "");
+    setEmail(patient!.email ?? "");
+    setDateOfBirth(patient!.dateOfBirth ?? "");
+    setOccupation(patient!.occupation ?? "");
     setCondition(patient!.condition);
+    setDiagnosis(patient!.diagnosis ?? "");
+    setChiefComplaint(patient!.chiefComplaint ?? "");
+    setPtEvaluation(patient!.ptEvaluation ?? "");
+    setMedicalHistory(patient!.medicalHistory ?? "");
+    setPrecautions(patient!.precautions ?? "");
+    setTreatmentGoals(patient!.treatmentGoals ?? "");
     setStatus(patient!.status);
     setReferredBy(patient!.referredBy ?? "");
     setEditing(true);
@@ -107,8 +125,17 @@ export function PatientDetailView({ patientId }: { patientId: string }) {
     try {
       await updatePatient(patient!.id, {
         name: name.trim(),
-        phone: phone.trim() || undefined,
+        phone: phone.trim() || "",
+        email: email.trim() || "",
+        dateOfBirth: dateOfBirth.trim() || "",
+        occupation: occupation.trim() || "",
         condition: condition.trim(),
+        diagnosis: diagnosis.trim() || "",
+        chiefComplaint: chiefComplaint.trim() || "",
+        ptEvaluation: ptEvaluation.trim() || "",
+        medicalHistory: medicalHistory.trim() || "",
+        precautions: precautions.trim() || "",
+        treatmentGoals: treatmentGoals.trim() || "",
         status,
         referredBy:
           status === "transferred" ? referredBy.trim() || "" : "",
@@ -159,7 +186,12 @@ export function PatientDetailView({ patientId }: { patientId: string }) {
             <h1 className="font-[family-name:var(--font-display)] text-3xl font-semibold tracking-tight text-stone-900">
               {patient.name}
             </h1>
-            <p className="mt-1 text-stone-500">{patient.condition}</p>
+            <p className="mt-1 text-stone-500">
+              {patient.condition ||
+                patient.diagnosis ||
+                patient.chiefComplaint ||
+                "No condition recorded"}
+            </p>
             <div className="mt-2">
               <PatientStatusBadge status={patient.status} />
             </div>
@@ -195,32 +227,104 @@ export function PatientDetailView({ patientId }: { patientId: string }) {
 
       {editing ? (
         <Surface className="p-5">
-          <form onSubmit={saveEdit} className="grid gap-3 sm:grid-cols-2">
-            <Field label="Full name">
-              <input
-                required
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className={inputClass}
+          <form onSubmit={saveEdit} className="space-y-5">
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Field label="Full name">
+                <input
+                  required
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className={inputClass}
+                />
+              </Field>
+              <Field label="Phone (optional)">
+                <input
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  inputMode="tel"
+                  className={inputClass}
+                />
+              </Field>
+              <Field label="Email (optional)">
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className={inputClass}
+                />
+              </Field>
+              <Field label="Date of birth (optional)">
+                <input
+                  type="date"
+                  value={dateOfBirth}
+                  onChange={(e) => setDateOfBirth(e.target.value)}
+                  className={inputClass}
+                />
+              </Field>
+              <Field label="Occupation (optional)">
+                <input
+                  value={occupation}
+                  onChange={(e) => setOccupation(e.target.value)}
+                  className={inputClass}
+                />
+              </Field>
+              <Field label="Condition / type (optional)">
+                <input
+                  value={condition}
+                  onChange={(e) => setCondition(e.target.value)}
+                  className={inputClass}
+                />
+              </Field>
+              <Field label="Diagnosis (optional)">
+                <input
+                  value={diagnosis}
+                  onChange={(e) => setDiagnosis(e.target.value)}
+                  className={inputClass}
+                />
+              </Field>
+              <Field label="Chief complaint (optional)">
+                <input
+                  value={chiefComplaint}
+                  onChange={(e) => setChiefComplaint(e.target.value)}
+                  className={inputClass}
+                />
+              </Field>
+            </div>
+            <Field label="PT evaluation (optional)">
+              <textarea
+                value={ptEvaluation}
+                onChange={(e) => setPtEvaluation(e.target.value)}
+                rows={4}
+                className={`${inputClass} min-h-[5.5rem] py-3`}
               />
             </Field>
-            <Field label="Phone (optional)">
-              <input
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                inputMode="tel"
-                className={inputClass}
+            <Field label="Medical history (optional)">
+              <textarea
+                value={medicalHistory}
+                onChange={(e) => setMedicalHistory(e.target.value)}
+                rows={3}
+                className={`${inputClass} min-h-[5rem] py-3`}
               />
             </Field>
-            <Field label="Condition / type">
-              <input
-                required
-                value={condition}
-                onChange={(e) => setCondition(e.target.value)}
-                className={inputClass}
-              />
-            </Field>
-            <div className="sm:col-span-2">
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Field label="Precautions (optional)">
+                <textarea
+                  value={precautions}
+                  onChange={(e) => setPrecautions(e.target.value)}
+                  rows={3}
+                  className={`${inputClass} min-h-[5rem] py-3`}
+                />
+              </Field>
+              <Field label="Treatment goals (optional)">
+                <textarea
+                  value={treatmentGoals}
+                  onChange={(e) => setTreatmentGoals(e.target.value)}
+                  rows={3}
+                  className={`${inputClass} min-h-[5rem] py-3`}
+                />
+              </Field>
+            </div>
+            <div>
               <p className="mb-1.5 text-sm font-medium text-stone-600">Status</p>
               <PatientStatusPicker value={status} onChange={setStatus} />
               {status === "transferred" ? (
@@ -236,7 +340,7 @@ export function PatientDetailView({ patientId }: { patientId: string }) {
                 </div>
               ) : null}
             </div>
-            <div className="flex gap-2 sm:col-span-2">
+            <div className="flex gap-2">
               <PrimaryButton type="submit" disabled={busy}>
                 {busy ? (
                   <span className="inline-flex items-center gap-2">
@@ -257,36 +361,128 @@ export function PatientDetailView({ patientId }: { patientId: string }) {
           </form>
         </Surface>
       ) : (
-        <dl className="grid gap-4 rounded-2xl border border-stone-200/70 bg-white p-5 shadow-sm sm:grid-cols-3">
-          <div>
-            <dt className="text-xs font-medium uppercase tracking-wide text-stone-500">
-              Phone
-            </dt>
-            <dd className="mt-1 text-stone-800">{patient.phone || "—"}</dd>
-          </div>
-          <div>
-            <dt className="text-xs font-medium uppercase tracking-wide text-stone-500">
-              Condition
-            </dt>
-            <dd className="mt-1 text-stone-800">{patient.condition}</dd>
-          </div>
-          {patient.status === "transferred" && patient.referredBy ? (
+        <div className="space-y-4">
+          <dl className="grid gap-4 rounded-2xl border border-stone-200/70 bg-white p-5 shadow-sm sm:grid-cols-3">
             <div>
               <dt className="text-xs font-medium uppercase tracking-wide text-stone-500">
-                Referred by
+                Phone
               </dt>
-              <dd className="mt-1 text-stone-800">{patient.referredBy}</dd>
+              <dd className="mt-1 text-stone-800">{patient.phone || "—"}</dd>
             </div>
-          ) : null}
-          <div>
-            <dt className="text-xs font-medium uppercase tracking-wide text-stone-500">
-              Patient since
-            </dt>
-            <dd className="mt-1 text-stone-800">
-              {formatDate(patient.createdAt)}
-            </dd>
-          </div>
-        </dl>
+            <div>
+              <dt className="text-xs font-medium uppercase tracking-wide text-stone-500">
+                Email
+              </dt>
+              <dd className="mt-1 text-stone-800">{patient.email || "—"}</dd>
+            </div>
+            <div>
+              <dt className="text-xs font-medium uppercase tracking-wide text-stone-500">
+                Date of birth
+              </dt>
+              <dd className="mt-1 text-stone-800">
+                {patient.dateOfBirth
+                  ? formatDate(`${patient.dateOfBirth}T12:00:00`)
+                  : "—"}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-xs font-medium uppercase tracking-wide text-stone-500">
+                Occupation
+              </dt>
+              <dd className="mt-1 text-stone-800">
+                {patient.occupation || "—"}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-xs font-medium uppercase tracking-wide text-stone-500">
+                Condition
+              </dt>
+              <dd className="mt-1 text-stone-800">
+                {patient.condition || "—"}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-xs font-medium uppercase tracking-wide text-stone-500">
+                Diagnosis
+              </dt>
+              <dd className="mt-1 text-stone-800">
+                {patient.diagnosis || "—"}
+              </dd>
+            </div>
+            <div className="sm:col-span-3">
+              <dt className="text-xs font-medium uppercase tracking-wide text-stone-500">
+                Chief complaint
+              </dt>
+              <dd className="mt-1 text-stone-800">
+                {patient.chiefComplaint || "—"}
+              </dd>
+            </div>
+            {patient.status === "transferred" && patient.referredBy ? (
+              <div>
+                <dt className="text-xs font-medium uppercase tracking-wide text-stone-500">
+                  Referred by
+                </dt>
+                <dd className="mt-1 text-stone-800">{patient.referredBy}</dd>
+              </div>
+            ) : null}
+            <div>
+              <dt className="text-xs font-medium uppercase tracking-wide text-stone-500">
+                Patient since
+              </dt>
+              <dd className="mt-1 text-stone-800">
+                {formatDate(patient.createdAt)}
+              </dd>
+            </div>
+          </dl>
+
+          {(patient.ptEvaluation ||
+            patient.medicalHistory ||
+            patient.precautions ||
+            patient.treatmentGoals) && (
+            <dl className="grid gap-4 rounded-2xl border border-stone-200/70 bg-white p-5 shadow-sm sm:grid-cols-2">
+              {patient.ptEvaluation ? (
+                <div className="sm:col-span-2">
+                  <dt className="text-xs font-medium uppercase tracking-wide text-stone-500">
+                    PT evaluation
+                  </dt>
+                  <dd className="mt-1 whitespace-pre-wrap text-stone-800">
+                    {patient.ptEvaluation}
+                  </dd>
+                </div>
+              ) : null}
+              {patient.medicalHistory ? (
+                <div className="sm:col-span-2">
+                  <dt className="text-xs font-medium uppercase tracking-wide text-stone-500">
+                    Medical history
+                  </dt>
+                  <dd className="mt-1 whitespace-pre-wrap text-stone-800">
+                    {patient.medicalHistory}
+                  </dd>
+                </div>
+              ) : null}
+              {patient.precautions ? (
+                <div>
+                  <dt className="text-xs font-medium uppercase tracking-wide text-stone-500">
+                    Precautions
+                  </dt>
+                  <dd className="mt-1 whitespace-pre-wrap text-stone-800">
+                    {patient.precautions}
+                  </dd>
+                </div>
+              ) : null}
+              {patient.treatmentGoals ? (
+                <div>
+                  <dt className="text-xs font-medium uppercase tracking-wide text-stone-500">
+                    Treatment goals
+                  </dt>
+                  <dd className="mt-1 whitespace-pre-wrap text-stone-800">
+                    {patient.treatmentGoals}
+                  </dd>
+                </div>
+              ) : null}
+            </dl>
+          )}
+        </div>
       )}
 
       <section className="grid gap-6 lg:grid-cols-2">

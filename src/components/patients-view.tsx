@@ -34,7 +34,9 @@ export function PatientsView() {
       return (
         p.name.toLowerCase().includes(q) ||
         p.condition.toLowerCase().includes(q) ||
-        (p.phone?.includes(q) ?? false)
+        (p.diagnosis?.toLowerCase().includes(q) ?? false) ||
+        (p.phone?.includes(q) ?? false) ||
+        (p.email?.toLowerCase().includes(q) ?? false)
       );
     });
   }, [patients, query, statusFilter]);
@@ -71,7 +73,7 @@ export function PatientsView() {
       <div className="flex flex-col gap-3 sm:flex-row">
         <input
           type="search"
-          placeholder="Search name, condition, phone…"
+          placeholder="Search name, condition, diagnosis, phone…"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           className={`${inputClass} sm:max-w-md`}
@@ -111,7 +113,7 @@ export function PatientsView() {
                     {p.name}
                   </p>
                   <p className="truncate text-sm text-stone-500">
-                    {p.condition}
+                    {p.condition || p.diagnosis || "No condition"}
                   </p>
                 </div>
                 <PatientStatusBadge status={p.status} />
@@ -160,7 +162,9 @@ export function PatientsView() {
                       {p.name}
                     </Link>
                   </td>
-                  <td className="px-4 py-3 text-stone-600">{p.condition}</td>
+                  <td className="px-4 py-3 text-stone-600">
+                    {p.condition || p.diagnosis || "—"}
+                  </td>
                   <td className="hidden px-4 py-3 text-stone-600 lg:table-cell">
                     {p.phone || "—"}
                   </td>

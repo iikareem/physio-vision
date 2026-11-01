@@ -220,7 +220,10 @@ export function SessionDetailView({ sessionId }: { sessionId: string }) {
           {patient.name}
         </h1>
         <p className="mt-1 text-sm text-stone-600">
-          {session.type} · {patient.condition}
+          {session.type}
+          {patient.condition || patient.diagnosis
+            ? ` · ${patient.condition || patient.diagnosis}`
+            : ""}
         </p>
       </Surface>
 

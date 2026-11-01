@@ -51,7 +51,7 @@ type AppStoreValue = {
   updatePatient: (
     id: string,
     patch: Partial<
-      Pick<Patient, "name" | "phone" | "condition" | "status" | "referredBy">
+      Omit<Patient, "id" | "workspaceId" | "createdAt" | "updatedAt">
     >,
   ) => Promise<void>;
   addNote: (
@@ -277,11 +277,7 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
     ) => {
       const patient = await patientsApi.createPatient({
         workspaceId,
-        name: input.name,
-        phone: input.phone,
-        condition: input.condition,
-        status: input.status,
-        referredBy: input.referredBy,
+        ...input,
       });
       setPatients((prev) => [patient, ...prev]);
       return patient;
@@ -293,7 +289,7 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
     async (
       id: string,
       patch: Partial<
-        Pick<Patient, "name" | "phone" | "condition" | "status" | "referredBy">
+        Omit<Patient, "id" | "workspaceId" | "createdAt" | "updatedAt">
       >,
     ) => {
       const patient = await patientsApi.updatePatient(id, patch);

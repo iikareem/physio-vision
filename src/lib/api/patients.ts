@@ -1,5 +1,5 @@
 import { apiJson } from "@/lib/api/client";
-import type { Patient, PatientStatus, WorkspaceId } from "@/lib/types";
+import type { Patient, PatientProfileInput, PatientStatus, WorkspaceId } from "@/lib/types";
 
 export function listPatients(workspace: WorkspaceId, opts?: { board?: boolean; status?: PatientStatus }) {
   const params = new URLSearchParams({ workspace });
@@ -12,40 +12,65 @@ export function getPatient(id: string) {
   return apiJson<Patient>(`/patients/${id}`);
 }
 
-export function createPatient(input: {
-  workspaceId: WorkspaceId;
-  name: string;
-  phone?: string;
-  condition: string;
-  status?: PatientStatus;
-  referredBy?: string;
-}) {
+function optionalBodyField(value: string | undefined): string | null {
+  const trimmed = value?.trim();
+  return trimmed ? trimmed : null;
+}
+
+export function createPatient(
+  input: { workspaceId: WorkspaceId } & PatientProfileInput,
+) {
   return apiJson<Patient>("/patients", {
     method: "POST",
     body: {
       workspaceId: input.workspaceId,
       name: input.name,
-      phone: input.phone ?? null,
-      condition: input.condition,
+      phone: optionalBodyField(input.phone),
+      email: optionalBodyField(input.email),
+      dateOfBirth: optionalBodyField(input.dateOfBirth),
+      occupation: optionalBodyField(input.occupation),
+      condition: input.condition?.trim() ?? "",
+      diagnosis: optionalBodyField(input.diagnosis),
+      chiefComplaint: optionalBodyField(input.chiefComplaint),
+      ptEvaluation: optionalBodyField(input.ptEvaluation),
+      medicalHistory: optionalBodyField(input.medicalHistory),
+      precautions: optionalBodyField(input.precautions),
+      treatmentGoals: optionalBodyField(input.treatmentGoals),
       status: input.status ?? "active",
-      referredBy: input.referredBy ?? null,
+      referredBy: optionalBodyField(input.referredBy),
     },
   });
 }
 
+const CLEARABLE_KEYS = [
+  "phone",
+  "email",
+  "dateOfBirth",
+  "occupation",
+  "diagnosis",
+  "chiefComplaint",
+  "ptEvaluation",
+  "medicalHistory",
+  "precautions",
+  "treatmentGoals",
+  "referredBy",
+] as const;
+
 export function updatePatient(
   id: string,
-  patch: Partial<
-    Pick<Patient, "name" | "phone" | "condition" | "status" | "referredBy">
-  >,
+  patch: Partial<PatientProfileInput>,
 ) {
+  const body: Record<string, unknown> = { ...patch };
+  for (const key of CLEARABLE_KEYS) {
+    if (key in patch) {
+      body[key] = optionalBodyField(patch[key]);
+    }
+  }
+  if (patch.condition !== undefined) {
+    body.condition = patch.condition.trim();
+  }
   return apiJson<Patient>(`/patients/${id}`, {
     method: "PATCH",
-    body: {
-      ...patch,
-      phone: patch.phone === undefined ? undefined : patch.phone || "",
-      referredBy:
-        patch.referredBy === undefined ? undefined : patch.referredBy || "",
-    },
+    body,
   });
 }

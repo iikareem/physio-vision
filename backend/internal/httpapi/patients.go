@@ -4,6 +4,7 @@ import (
 	"errors"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 
@@ -47,12 +48,21 @@ func (s *Server) handleListPatients(w http.ResponseWriter, r *http.Request) {
 }
 
 type createPatientRequest struct {
-	WorkspaceID string  `json:"workspaceId"`
-	Name        string  `json:"name"`
-	Phone       *string `json:"phone"`
-	Condition   string  `json:"condition"`
-	Status      string  `json:"status"`
-	ReferredBy  *string `json:"referredBy"`
+	WorkspaceID    string  `json:"workspaceId"`
+	Name           string  `json:"name"`
+	Phone          *string `json:"phone"`
+	Email          *string `json:"email"`
+	DateOfBirth    *string `json:"dateOfBirth"`
+	Occupation     *string `json:"occupation"`
+	Condition      string  `json:"condition"`
+	Diagnosis      *string `json:"diagnosis"`
+	ChiefComplaint *string `json:"chiefComplaint"`
+	PTEvaluation   *string `json:"ptEvaluation"`
+	MedicalHistory *string `json:"medicalHistory"`
+	Precautions    *string `json:"precautions"`
+	TreatmentGoals *string `json:"treatmentGoals"`
+	Status         string  `json:"status"`
+	ReferredBy     *string `json:"referredBy"`
 }
 
 func (s *Server) handleCreatePatient(w http.ResponseWriter, r *http.Request) {
@@ -68,9 +78,8 @@ func (s *Server) handleCreatePatient(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	req.Name = strings.TrimSpace(req.Name)
-	req.Condition = strings.TrimSpace(req.Condition)
-	if req.Name == "" || req.Condition == "" {
-		badRequest(w, errors.New("name and condition are required"))
+	if req.Name == "" {
+		badRequest(w, errors.New("name is required"))
 		return
 	}
 
@@ -82,20 +91,29 @@ func (s *Server) handleCreatePatient(w http.ResponseWriter, r *http.Request) {
 		badRequest(w, errors.New("invalid status"))
 		return
 	}
-	if status == model.PatientTransferred {
-		if req.ReferredBy == nil || strings.TrimSpace(*req.ReferredBy) == "" {
-			badRequest(w, errors.New("referredBy is required when status is transferred"))
-			return
-		}
+
+	dob, err := parseOptionalDate(req.DateOfBirth)
+	if err != nil {
+		badRequest(w, err)
+		return
 	}
 
 	p, err := s.store.CreatePatient(r.Context(), ownerIDFrom(r.Context()), store.CreatePatientInput{
-		Workspace:  workspace,
-		Name:       req.Name,
-		Phone:      trimPtr(req.Phone),
-		Condition:  req.Condition,
-		Status:     status,
-		ReferredBy: trimPtr(req.ReferredBy),
+		Workspace:      workspace,
+		Name:           req.Name,
+		Phone:          trimPtr(req.Phone),
+		Email:          trimPtr(req.Email),
+		DateOfBirth:    dob,
+		Occupation:     trimPtr(req.Occupation),
+		Condition:      strings.TrimSpace(req.Condition),
+		Diagnosis:      trimPtr(req.Diagnosis),
+		ChiefComplaint: trimPtr(req.ChiefComplaint),
+		PTEvaluation:   trimPtr(req.PTEvaluation),
+		MedicalHistory: trimPtr(req.MedicalHistory),
+		Precautions:    trimPtr(req.Precautions),
+		TreatmentGoals: trimPtr(req.TreatmentGoals),
+		Status:         status,
+		ReferredBy:     trimPtr(req.ReferredBy),
 	})
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, "failed to create patient")
@@ -119,11 +137,20 @@ func (s *Server) handleGetPatient(w http.ResponseWriter, r *http.Request) {
 }
 
 type updatePatientRequest struct {
-	Name       *string `json:"name"`
-	Phone      *string `json:"phone"`
-	Condition  *string `json:"condition"`
-	Status     *string `json:"status"`
-	ReferredBy *string `json:"referredBy"`
+	Name           *string `json:"name"`
+	Phone          *string `json:"phone"`
+	Email          *string `json:"email"`
+	DateOfBirth    *string `json:"dateOfBirth"`
+	Occupation     *string `json:"occupation"`
+	Condition      *string `json:"condition"`
+	Diagnosis      *string `json:"diagnosis"`
+	ChiefComplaint *string `json:"chiefComplaint"`
+	PTEvaluation   *string `json:"ptEvaluation"`
+	MedicalHistory *string `json:"medicalHistory"`
+	Precautions    *string `json:"precautions"`
+	TreatmentGoals *string `json:"treatmentGoals"`
+	Status         *string `json:"status"`
+	ReferredBy     *string `json:"referredBy"`
 }
 
 func (s *Server) handleUpdatePatient(w http.ResponseWriter, r *http.Request) {
@@ -145,18 +172,45 @@ func (s *Server) handleUpdatePatient(w http.ResponseWriter, r *http.Request) {
 	}
 	if req.Condition != nil {
 		v := strings.TrimSpace(*req.Condition)
-		if v == "" {
-			badRequest(w, errors.New("condition cannot be empty"))
-			return
-		}
 		in.Condition = &v
 	}
 	if req.Phone != nil {
-		if strings.TrimSpace(*req.Phone) == "" {
-			in.ClearPhone = true
-		} else {
-			in.Phone = trimPtr(req.Phone)
+		in.Phone = optionalTextFromPtr(req.Phone)
+	}
+	if req.Email != nil {
+		in.Email = optionalTextFromPtr(req.Email)
+	}
+	if req.Occupation != nil {
+		in.Occupation = optionalTextFromPtr(req.Occupation)
+	}
+	if req.Diagnosis != nil {
+		in.Diagnosis = optionalTextFromPtr(req.Diagnosis)
+	}
+	if req.ChiefComplaint != nil {
+		in.ChiefComplaint = optionalTextFromPtr(req.ChiefComplaint)
+	}
+	if req.PTEvaluation != nil {
+		in.PTEvaluation = optionalTextFromPtr(req.PTEvaluation)
+	}
+	if req.MedicalHistory != nil {
+		in.MedicalHistory = optionalTextFromPtr(req.MedicalHistory)
+	}
+	if req.Precautions != nil {
+		in.Precautions = optionalTextFromPtr(req.Precautions)
+	}
+	if req.TreatmentGoals != nil {
+		in.TreatmentGoals = optionalTextFromPtr(req.TreatmentGoals)
+	}
+	if req.ReferredBy != nil {
+		in.ReferredBy = optionalTextFromPtr(req.ReferredBy)
+	}
+	if req.DateOfBirth != nil {
+		dob, err := parseOptionalDate(req.DateOfBirth)
+		if err != nil {
+			badRequest(w, err)
+			return
 		}
+		in.DateOfBirth = store.OptionalDate{Set: true, Value: dob}
 	}
 	if req.Status != nil {
 		st := model.PatientStatus(*req.Status)
@@ -165,13 +219,6 @@ func (s *Server) handleUpdatePatient(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		in.Status = &st
-	}
-	if req.ReferredBy != nil {
-		if strings.TrimSpace(*req.ReferredBy) == "" {
-			in.ClearRef = true
-		} else {
-			in.ReferredBy = trimPtr(req.ReferredBy)
-		}
 	}
 
 	p, err := s.store.UpdatePatient(r.Context(), ownerIDFrom(r.Context()), id, in)
@@ -195,4 +242,23 @@ func trimPtr(v *string) *string {
 		return nil
 	}
 	return &t
+}
+
+func optionalTextFromPtr(v *string) store.OptionalText {
+	return store.OptionalText{Set: true, Value: trimPtr(v)}
+}
+
+func parseOptionalDate(raw *string) (*time.Time, error) {
+	if raw == nil {
+		return nil, nil
+	}
+	s := strings.TrimSpace(*raw)
+	if s == "" {
+		return nil, nil
+	}
+	t, err := time.Parse("2006-01-02", s)
+	if err != nil {
+		return nil, errors.New("dateOfBirth must be YYYY-MM-DD")
+	}
+	return &t, nil
 }
