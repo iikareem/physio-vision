@@ -8,6 +8,13 @@ import { AddSessionForm } from "@/components/add-session-form";
 import { PatientStatusPicker } from "@/components/patient-status-picker";
 import { AppointmentStatusBadge, PatientStatusBadge } from "@/components/status-badge";
 import {
+  AlertBanner,
+  EmptyState,
+  LoadingBlock,
+  Spinner,
+  useToast,
+} from "@/components/feedback";
+import {
   Field,
   inputClass,
   PrimaryButton,
@@ -19,6 +26,7 @@ import type { PatientStatus } from "@/lib/types";
 
 export function PatientDetailView({ patientId }: { patientId: string }) {
   const hydrated = useHydrated();
+  const toast = useToast();
   const {
     ready,
     workspaceId,
@@ -51,17 +59,22 @@ export function PatientDetailView({ patientId }: { patientId: string }) {
   const [booking, setBooking] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  const [extrasReady, setExtrasReady] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!ready || !patientId) return;
-    void ensurePatientExtras(patientId).catch(() => {
-      /* list views still work without extras */
-    });
+    setExtrasReady(false);
+    void ensurePatientExtras(patientId)
+      .catch(() => {
+        /* list views still work without extras */
+      })
+      .finally(() => setExtrasReady(true));
   }, [ready, patientId, ensurePatientExtras]);
 
   if (!hydrated || !ready) {
-    return <p className="text-stone-500">Loading…</p>;
+    return <LoadingBlock label="Loading patient…" />;
   }
 
   if (!patient || patient.workspaceId !== workspaceId) {
@@ -101,10 +114,33 @@ export function PatientDetailView({ patientId }: { patientId: string }) {
           status === "transferred" ? referredBy.trim() || "" : "",
       });
       setEditing(false);
+      toast.success("Patient profile saved");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to save patient");
     } finally {
       setBusy(false);
+    }
+  }
+
+  async function handleDownload(docId: string) {
+    if (downloadingId) return;
+    setDownloadingId(docId);
+    setError(null);
+    toast.info("Preparing document…");
+    try {
+      const result = await downloadDocument(docId);
+      toast.success(
+        result.mode === "open"
+          ? `Opened ${result.fileName}`
+          : `Downloading ${result.fileName}`,
+      );
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Download failed";
+      setError(message);
+      toast.error(message);
+    } finally {
+      setDownloadingId(null);
     }
   }
 
@@ -145,9 +181,9 @@ export function PatientDetailView({ patientId }: { patientId: string }) {
       </div>
 
       {error ? (
-        <p className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+        <AlertBanner tone="error" onDismiss={() => setError(null)}>
           {error}
-        </p>
+        </AlertBanner>
       ) : null}
 
       {booking && (
@@ -202,9 +238,19 @@ export function PatientDetailView({ patientId }: { patientId: string }) {
             </div>
             <div className="flex gap-2 sm:col-span-2">
               <PrimaryButton type="submit" disabled={busy}>
-                {busy ? "Saving…" : "Save"}
+                {busy ? (
+                  <span className="inline-flex items-center gap-2">
+                    <Spinner className="h-4 w-4" /> Saving…
+                  </span>
+                ) : (
+                  "Save"
+                )}
               </PrimaryButton>
-              <SecondaryButton type="button" onClick={() => setEditing(false)}>
+              <SecondaryButton
+                type="button"
+                onClick={() => setEditing(false)}
+                disabled={busy}
+              >
                 Cancel
               </SecondaryButton>
             </div>
@@ -258,7 +304,12 @@ export function PatientDetailView({ patientId }: { patientId: string }) {
           </div>
           <ul className="mt-4 divide-y divide-stone-100">
             {sessions.length === 0 ? (
-              <li className="py-4 text-sm text-stone-500">No sessions yet.</li>
+              <li className="py-4">
+                <EmptyState
+                  title="No sessions yet"
+                  description="Book a session to start the clinical record."
+                />
+              </li>
             ) : (
               sessions.slice(0, 8).map((s) => (
                 <li key={s.id}>
@@ -294,6 +345,7 @@ export function PatientDetailView({ patientId }: { patientId: string }) {
               try {
                 await addNote(patient.id, noteBody.trim());
                 setNoteBody("");
+                toast.success("Note saved");
               } catch (err) {
                 setError(err instanceof Error ? err.message : "Failed to add note");
               } finally {
@@ -308,13 +360,31 @@ export function PatientDetailView({ patientId }: { patientId: string }) {
               placeholder="General patient note…"
               className={`${inputClass} min-h-[5rem] py-3`}
             />
-            <PrimaryButton type="submit" disabled={busy}>
-              Add note
+            <PrimaryButton type="submit" disabled={!noteBody.trim() || busy}>
+              {busy ? (
+                <span className="inline-flex items-center gap-2">
+                  <Spinner className="h-4 w-4" /> Saving…
+                </span>
+              ) : (
+                "Add note"
+              )}
             </PrimaryButton>
           </form>
           <ul className="mt-4 space-y-3">
-            {notes.length === 0 ? (
-              <li className="text-sm text-stone-500">No notes yet.</li>
+            {!extrasReady ? (
+              <li className="py-6 text-center text-sm text-stone-500">
+                <span className="inline-flex items-center gap-2">
+                  <Spinner className="h-4 w-4 text-[color:var(--accent)]" />
+                  Loading notes…
+                </span>
+              </li>
+            ) : notes.length === 0 ? (
+              <li>
+                <EmptyState
+                  title="No notes yet"
+                  description="Add a general note or open a session for clinical notes."
+                />
+              </li>
             ) : (
               notes.slice(0, 6).map((n) => (
                 <li
@@ -366,6 +436,7 @@ export function PatientDetailView({ patientId }: { patientId: string }) {
               setDocLabel("");
               setDocFile(null);
               if (fileRef.current) fileRef.current.value = "";
+              toast.success("Document uploaded");
             } catch (err) {
               setError(
                 err instanceof Error ? err.message : "Failed to upload document",
@@ -400,51 +471,72 @@ export function PatientDetailView({ patientId }: { patientId: string }) {
             className="min-h-11 text-sm text-stone-600 file:mr-3 file:rounded-lg file:border-0 file:bg-stone-100 file:px-3 file:py-2 file:text-sm file:font-semibold"
           />
           <PrimaryButton type="submit" disabled={!docFile || busy}>
-            Upload
+            {busy ? (
+              <span className="inline-flex items-center gap-2">
+                <Spinner className="h-4 w-4" /> Uploading…
+              </span>
+            ) : (
+              "Upload"
+            )}
           </PrimaryButton>
         </form>
         <ul className="mt-4 space-y-2">
-          {documents.length === 0 ? (
-            <li className="text-sm text-stone-500">No documents yet.</li>
+          {!extrasReady ? (
+            <li className="py-6 text-center text-sm text-stone-500">
+              <span className="inline-flex items-center gap-2">
+                <Spinner className="h-4 w-4 text-[color:var(--accent)]" />
+                Loading documents…
+              </span>
+            </li>
+          ) : documents.length === 0 ? (
+            <li>
+              <EmptyState
+                title="No documents yet"
+                description="Upload a PDF, scan, or report for this patient."
+              />
+            </li>
           ) : (
-            documents.map((d) => (
-              <li
-                key={d.id}
-                className="flex items-center justify-between gap-3 rounded-xl border border-stone-200 px-3 py-2.5 text-sm"
-              >
-                <div className="min-w-0">
-                  <p className="font-medium text-stone-800">{d.label}</p>
-                  <p className="truncate text-xs text-stone-500">
-                    {d.type} · {d.fileName} · {formatDate(d.uploadedAt)}
-                  </p>
-                </div>
-                <div className="flex shrink-0 items-center gap-2">
-                  {d.appointmentId ? (
-                    <Link
-                      href={`/sessions/${d.appointmentId}`}
-                      className="text-xs font-semibold text-teal-700 hover:underline"
+            documents.map((d) => {
+              const isDownloading = downloadingId === d.id;
+              return (
+                <li
+                  key={d.id}
+                  className="flex items-center justify-between gap-3 rounded-xl border border-stone-200 px-3 py-2.5 text-sm"
+                >
+                  <div className="min-w-0">
+                    <p className="font-medium text-stone-800">{d.label}</p>
+                    <p className="truncate text-xs text-stone-500">
+                      {d.type} · {d.fileName} · {formatDate(d.uploadedAt)}
+                    </p>
+                  </div>
+                  <div className="flex shrink-0 items-center gap-2">
+                    {d.appointmentId ? (
+                      <Link
+                        href={`/sessions/${d.appointmentId}`}
+                        className="text-xs font-semibold text-teal-700 hover:underline"
+                      >
+                        Session
+                      </Link>
+                    ) : null}
+                    <button
+                      type="button"
+                      disabled={Boolean(downloadingId)}
+                      onClick={() => void handleDownload(d.id)}
+                      className="inline-flex min-h-9 items-center gap-1.5 rounded-lg px-2.5 text-xs font-semibold text-teal-700 hover:bg-teal-50 disabled:cursor-wait disabled:opacity-60"
                     >
-                      Session
-                    </Link>
-                  ) : null}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      void downloadDocument(d.id).catch((err) => {
-                        setError(
-                          err instanceof Error
-                            ? err.message
-                            : "Download failed",
-                        );
-                      });
-                    }}
-                    className="text-xs font-semibold text-teal-700 hover:underline"
-                  >
-                    Download
-                  </button>
-                </div>
-              </li>
-            ))
+                      {isDownloading ? (
+                        <>
+                          <Spinner className="h-3.5 w-3.5" />
+                          Opening…
+                        </>
+                      ) : (
+                        "Open / Download"
+                      )}
+                    </button>
+                  </div>
+                </li>
+              );
+            })
           )}
         </ul>
       </Surface>

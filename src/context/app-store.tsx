@@ -14,6 +14,7 @@ import * as appointmentsApi from "@/lib/api/appointments";
 import * as documentsApi from "@/lib/api/documents";
 import * as notesApi from "@/lib/api/notes";
 import * as patientsApi from "@/lib/api/patients";
+import { saveBlobAsFile } from "@/lib/download";
 import type {
   Appointment,
   AppointmentStatus,
@@ -65,7 +66,9 @@ type AppStoreValue = {
     type: string;
     appointmentId?: string;
   }) => Promise<Document>;
-  downloadDocument: (id: string) => Promise<void>;
+  downloadDocument: (
+    id: string,
+  ) => Promise<{ mode: "download" | "open"; fileName: string }>;
   addAppointment: (input: {
     patientId: string;
     startsAt: string;
@@ -322,18 +325,19 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
     [],
   );
 
-  const downloadDocument = useCallback(async (id: string) => {
-    const doc = documents.find((d) => d.id === id);
-    const blob = await documentsApi.downloadDocumentFile(id);
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = doc?.fileName || "document";
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
-  }, [documents]);
+  const downloadDocument = useCallback(
+    async (id: string) => {
+      const doc = documents.find((d) => d.id === id);
+      const fileName = doc?.fileName || "document";
+      const blob = await documentsApi.downloadDocumentFile(id);
+      const result = await saveBlobAsFile(blob, fileName);
+      if (!result.ok) {
+        throw new Error(result.error);
+      }
+      return { mode: result.mode, fileName };
+    },
+    [documents],
+  );
 
   const addAppointment = useCallback(
     async (input: {

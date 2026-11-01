@@ -4,6 +4,13 @@ import Link from "next/link";
 import { FormEvent, useEffect, useRef, useState } from "react";
 import { useAppStore } from "@/context/app-store";
 import {
+  AlertBanner,
+  EmptyState,
+  LoadingBlock,
+  Spinner,
+  useToast,
+} from "@/components/feedback";
+import {
   inputClass,
   PrimaryButton,
   SecondaryButton,
@@ -16,6 +23,7 @@ type FocusTab = "notes" | "pdfs";
 
 export function SessionDetailView({ sessionId }: { sessionId: string }) {
   const hydrated = useHydrated();
+  const toast = useToast();
   const {
     ready,
     workspaceId,
@@ -41,12 +49,17 @@ export function SessionDetailView({ sessionId }: { sessionId: string }) {
   const [pdfFile, setPdfFile] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  const [extrasReady, setExtrasReady] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const checkedInRef = useRef(false);
 
   useEffect(() => {
     if (!session?.patientId || !ready) return;
-    void ensurePatientExtras(session.patientId).catch(() => undefined);
+    setExtrasReady(false);
+    void ensurePatientExtras(session.patientId)
+      .catch(() => undefined)
+      .finally(() => setExtrasReady(true));
   }, [session?.patientId, ready, ensurePatientExtras]);
 
   useEffect(() => {
@@ -60,7 +73,7 @@ export function SessionDetailView({ sessionId }: { sessionId: string }) {
   }, [session, setAppointmentStatus]);
 
   if (!hydrated || !ready) {
-    return <p className="text-stone-500">Loading…</p>;
+    return <LoadingBlock label="Loading session…" />;
   }
 
   if (!session || session.workspaceId !== workspaceId || !patient) {
@@ -84,6 +97,7 @@ export function SessionDetailView({ sessionId }: { sessionId: string }) {
     try {
       await addNote(patient!.id, noteBody.trim(), session!.id);
       setNoteBody("");
+      toast.success("Note saved");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to save note");
     } finally {
@@ -96,6 +110,7 @@ export function SessionDetailView({ sessionId }: { sessionId: string }) {
     setError(null);
     try {
       await setAppointmentStatus(session!.id, "done");
+      toast.success("Session finished");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to finish session");
     } finally {
@@ -108,10 +123,33 @@ export function SessionDetailView({ sessionId }: { sessionId: string }) {
     setError(null);
     try {
       await setAppointmentStatus(session!.id, "no_show");
+      toast.info("Session marked as skipped");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to skip session");
     } finally {
       setBusy(false);
+    }
+  }
+
+  async function handleDownload(docId: string) {
+    if (downloadingId) return;
+    setDownloadingId(docId);
+    setError(null);
+    toast.info("Preparing document…");
+    try {
+      const result = await downloadDocument(docId);
+      toast.success(
+        result.mode === "open"
+          ? `Opened ${result.fileName}`
+          : `Downloading ${result.fileName}`,
+      );
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Download failed";
+      setError(message);
+      toast.error(message);
+    } finally {
+      setDownloadingId(null);
     }
   }
 
@@ -139,6 +177,7 @@ export function SessionDetailView({ sessionId }: { sessionId: string }) {
       setPdfLabel("");
       setPdfFile(null);
       if (fileRef.current) fileRef.current.value = "";
+      toast.success("PDF attached");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to attach PDF");
     } finally {
@@ -168,9 +207,9 @@ export function SessionDetailView({ sessionId }: { sessionId: string }) {
       </div>
 
       {error ? (
-        <p className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+        <AlertBanner tone="error" onDismiss={() => setError(null)}>
           {error}
-        </p>
+        </AlertBanner>
       ) : null}
 
       <Surface className="px-5 py-4">
@@ -251,20 +290,31 @@ export function SessionDetailView({ sessionId }: { sessionId: string }) {
                   disabled={!noteBody.trim() || busy}
                   className="min-h-12 w-full text-base sm:w-auto sm:min-w-[10rem]"
                 >
-                  Save note
+                  {busy ? (
+                    <span className="inline-flex items-center gap-2">
+                      <Spinner className="h-4 w-4" /> Saving…
+                    </span>
+                  ) : (
+                    "Save note"
+                  )}
                 </PrimaryButton>
               </form>
             ) : null}
 
-            {sessionNotes.length === 0 ? (
-              <div className="rounded-2xl border border-dashed border-stone-300 bg-stone-50 px-4 py-10 text-center">
-                <p className="font-semibold text-stone-800">No notes yet</p>
-                <p className="mt-1 text-sm text-stone-500">
-                  {open
-                    ? "Your first note for this session will show up here."
-                    : "Nothing was saved on this session."}
-                </p>
+            {!extrasReady ? (
+              <div className="flex items-center justify-center gap-2 py-10 text-sm text-stone-500">
+                <Spinner className="h-4 w-4 text-[color:var(--accent)]" />
+                Loading notes…
               </div>
+            ) : sessionNotes.length === 0 ? (
+              <EmptyState
+                title="No notes yet"
+                description={
+                  open
+                    ? "Your first note for this session will show up here."
+                    : "Nothing was saved on this session."
+                }
+              />
             ) : (
               <ul className="space-y-3">
                 {sessionNotes.map((n) => (
@@ -344,60 +394,74 @@ export function SessionDetailView({ sessionId }: { sessionId: string }) {
                   disabled={!pdfFile || busy}
                   className="min-h-12 w-full text-base sm:w-auto sm:min-w-[10rem]"
                 >
-                  Attach PDF
+                  {busy ? (
+                    <span className="inline-flex items-center gap-2">
+                      <Spinner className="h-4 w-4" /> Uploading…
+                    </span>
+                  ) : (
+                    "Attach PDF"
+                  )}
                 </PrimaryButton>
               </form>
             ) : null}
 
-            {sessionDocs.length === 0 ? (
-              <div className="rounded-2xl border border-dashed border-stone-300 bg-stone-50 px-4 py-10 text-center">
-                <p className="font-semibold text-stone-800">No PDFs yet</p>
-                <p className="mt-1 text-sm text-stone-500">
-                  {open
-                    ? "Attach a report or plan for this session."
-                    : "No files were attached to this session."}
-                </p>
+            {!extrasReady ? (
+              <div className="flex items-center justify-center gap-2 py-10 text-sm text-stone-500">
+                <Spinner className="h-4 w-4 text-[color:var(--accent)]" />
+                Loading documents…
               </div>
+            ) : sessionDocs.length === 0 ? (
+              <EmptyState
+                title="No PDFs yet"
+                description={
+                  open
+                    ? "Attach a report or plan for this session."
+                    : "No files were attached to this session."
+                }
+              />
             ) : (
               <ul className="space-y-3">
-                {sessionDocs.map((d) => (
-                  <li
-                    key={d.id}
-                    className="flex items-start gap-3 rounded-2xl border-2 border-stone-200 bg-white px-4 py-4 shadow-sm"
-                  >
-                    <span
-                      className="mt-0.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-xs font-bold text-white"
-                      style={{ backgroundColor: "var(--accent)" }}
-                      aria-hidden
+                {sessionDocs.map((d) => {
+                  const isDownloading = downloadingId === d.id;
+                  return (
+                    <li
+                      key={d.id}
+                      className="flex items-start gap-3 rounded-2xl border-2 border-stone-200 bg-white px-4 py-4 shadow-sm"
                     >
-                      PDF
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      <p className="font-bold text-stone-900">{d.label}</p>
-                      <p className="mt-0.5 truncate text-sm text-stone-500">
-                        {d.fileName}
-                      </p>
-                      <p className="mt-2 text-xs font-medium text-stone-400">
-                        Added {formatDate(d.uploadedAt)}
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        void downloadDocument(d.id).catch((err) => {
-                          setError(
-                            err instanceof Error
-                              ? err.message
-                              : "Download failed",
-                          );
-                        });
-                      }}
-                      className="shrink-0 text-xs font-semibold text-teal-700 hover:underline"
-                    >
-                      Download
-                    </button>
-                  </li>
-                ))}
+                      <span
+                        className="mt-0.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-xs font-bold text-white"
+                        style={{ backgroundColor: "var(--accent)" }}
+                        aria-hidden
+                      >
+                        PDF
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <p className="font-bold text-stone-900">{d.label}</p>
+                        <p className="mt-0.5 truncate text-sm text-stone-500">
+                          {d.fileName}
+                        </p>
+                        <p className="mt-2 text-xs font-medium text-stone-400">
+                          Added {formatDate(d.uploadedAt)}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        disabled={Boolean(downloadingId)}
+                        onClick={() => void handleDownload(d.id)}
+                        className="inline-flex shrink-0 items-center gap-1.5 rounded-lg px-2.5 py-2 text-xs font-semibold text-teal-700 hover:bg-teal-50 disabled:cursor-wait disabled:opacity-60"
+                      >
+                        {isDownloading ? (
+                          <>
+                            <Spinner className="h-3.5 w-3.5" />
+                            Opening…
+                          </>
+                        ) : (
+                          "Open / Download"
+                        )}
+                      </button>
+                    </li>
+                  );
+                })}
               </ul>
             )}
           </div>
@@ -412,7 +476,13 @@ export function SessionDetailView({ sessionId }: { sessionId: string }) {
               disabled={busy}
               className="min-h-12 flex-1 text-base"
             >
-              Finish session
+              {busy ? (
+                <span className="inline-flex items-center gap-2">
+                  <Spinner className="h-4 w-4" /> Working…
+                </span>
+              ) : (
+                "Finish session"
+              )}
             </PrimaryButton>
             <SecondaryButton
               onClick={() => void skipSession()}

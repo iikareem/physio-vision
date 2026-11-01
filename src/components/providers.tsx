@@ -5,11 +5,13 @@ import { usePathname, useRouter } from "next/navigation";
 import { AuthProvider, useAuth } from "@/context/auth-context";
 import { AppStoreProvider } from "@/context/app-store";
 import { AppShell } from "@/components/app-shell";
+import { Spinner, ToastProvider } from "@/components/feedback";
 
 function ShellFallback() {
   return (
-    <div className="flex min-h-dvh items-center justify-center bg-[var(--background)] text-stone-500">
-      Loading Physio Vision…
+    <div className="flex min-h-dvh flex-col items-center justify-center gap-3 bg-[var(--background)] text-stone-500">
+      <Spinner className="h-7 w-7 text-[color:var(--accent)]" />
+      <p className="text-sm font-medium">Loading Physio Vision…</p>
     </div>
   );
 }
@@ -50,9 +52,11 @@ export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <AuthProvider>
       <AppStoreProvider>
-        <Suspense fallback={<ShellFallback />}>
-          <AppFrame>{children}</AppFrame>
-        </Suspense>
+        <ToastProvider>
+          <Suspense fallback={<ShellFallback />}>
+            <AppFrame>{children}</AppFrame>
+          </Suspense>
+        </ToastProvider>
       </AppStoreProvider>
     </AuthProvider>
   );
