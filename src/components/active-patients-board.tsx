@@ -3,15 +3,23 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useAppStore } from "@/context/app-store";
+import { useAuth } from "@/context/auth-context";
 import { PatientStatusBadge } from "@/components/status-badge";
 import { inputClass } from "@/components/ui";
 import { isBoardPatientStatus } from "@/lib/patient-status";
 import { workspaceTheme } from "@/lib/workspace-theme";
 
+function firstName(fullName: string | undefined) {
+  const part = fullName?.trim().split(/\s+/)[0];
+  return part || "there";
+}
+
 export function ActivePatientsBoard() {
+  const { user } = useAuth();
   const { patients, workspaceId } = useAppStore();
   const theme = workspaceTheme(workspaceId);
   const [query, setQuery] = useState("");
+  const greetingName = firstName(user?.name);
 
   const onBoard = useMemo(
     () =>
@@ -55,10 +63,18 @@ export function ActivePatientsBoard() {
           </p>
           <div className="mt-3 flex flex-wrap items-end justify-between gap-4">
             <div className="max-w-xl">
-              <h1 className="font-[family-name:var(--font-display)] text-3xl font-semibold tracking-tight text-white sm:text-[2.75rem] sm:leading-tight">
-                Patient board
+              <h1 className="font-[family-name:var(--font-display)] text-3xl font-semibold tracking-tight text-white sm:text-[2.75rem] sm:leading-[1.15]">
+                Hello,{" "}
+                <span className="italic font-medium text-white/95">
+                  {greetingName}
+                </span>
               </h1>
-              <p className={`mt-2 text-sm sm:text-base ${theme.heroBody}`}>
+              <p
+                className={`mt-2 text-sm font-medium tracking-wide sm:text-base ${theme.heroMuted}`}
+              >
+                Patient board
+              </p>
+              <p className={`mt-1.5 text-sm sm:text-base ${theme.heroBody}`}>
                 Active and transferred patients — open one to review history,
                 notes, and book a session.
               </p>
