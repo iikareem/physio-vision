@@ -4,6 +4,7 @@ import Link from "next/link";
 import { FormEvent, useState } from "react";
 import { EmptyState, Spinner } from "@/components/feedback";
 import { PrimaryButton, SecondaryButton, inputClass } from "@/components/ui";
+import { useAppStore } from "@/context/app-store";
 import { formatDateTime } from "@/lib/format";
 import type { LearningItem } from "@/lib/types";
 
@@ -67,6 +68,7 @@ export function LearningItemRow({
   onToggleDone: (id: string, done: boolean) => Promise<void>;
   onRemove: (id: string) => Promise<void>;
 }) {
+  const { workspaceId, setWorkspaceId } = useAppStore();
   const [acting, setActing] = useState(false);
 
   async function toggle() {
@@ -86,6 +88,12 @@ export function LearningItemRow({
       await onRemove(item.id);
     } finally {
       setActing(false);
+    }
+  }
+
+  function openPatient() {
+    if (item.workspaceId && item.workspaceId !== workspaceId) {
+      setWorkspaceId(item.workspaceId);
     }
   }
 
@@ -126,9 +134,13 @@ export function LearningItemRow({
             {showPatientLink && item.patientId ? (
               <Link
                 href={`/patients/${item.patientId}`}
+                onClick={openPatient}
                 className="font-medium text-teal-700 hover:underline"
               >
                 {item.patientName || "Patient"}
+                {item.workspaceId && item.workspaceId !== workspaceId
+                  ? ` · ${item.workspaceId}`
+                  : ""}
               </Link>
             ) : showPatientLink ? (
               <span className="font-medium text-stone-600">General</span>

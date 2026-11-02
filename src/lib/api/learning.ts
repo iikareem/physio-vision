@@ -1,15 +1,18 @@
 import { apiJson } from "@/lib/api/client";
 import type { LearningItem, WorkspaceId } from "@/lib/types";
 
-export function listLearning(
-  workspace: WorkspaceId,
-  opts?: { patientId?: string; scope?: "general"; done?: boolean },
-) {
-  const params = new URLSearchParams({ workspace });
+/** Learning is shared across clinic + private for the signed-in owner. */
+export function listLearning(opts?: {
+  patientId?: string;
+  scope?: "general";
+  done?: boolean;
+}) {
+  const params = new URLSearchParams();
   if (opts?.patientId) params.set("patientId", opts.patientId);
   if (opts?.scope) params.set("scope", opts.scope);
   if (opts?.done !== undefined) params.set("done", String(opts.done));
-  return apiJson<LearningItem[]>(`/learning?${params}`);
+  const qs = params.toString();
+  return apiJson<LearningItem[]>(qs ? `/learning?${qs}` : "/learning");
 }
 
 export function listPatientLearning(patientId: string) {

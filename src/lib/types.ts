@@ -62,9 +62,10 @@ export interface Note {
   createdAt: string;
 }
 
-/** Free-form “need to learn” dump — patient-linked or general. */
+/** Free-form “need to learn” dump — shared across clinic + private. */
 export interface LearningItem {
   id: string;
+  /** Origin workspace (where it was created / patient’s workspace); not a visibility filter. */
   workspaceId: WorkspaceId;
   patientId?: string;
   patientName?: string;

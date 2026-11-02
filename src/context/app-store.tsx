@@ -154,9 +154,8 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
         setAppointments(nextAppointments);
         setNotes([]);
         setDocuments([]);
-        setLearningItems([]);
+        // Learning is shared across clinic + private — keep it on workspace switch.
         setLoadedPatients(new Set());
-        setLearningLoaded(false);
         setReady(true);
       })
       .catch((err: unknown) => {
@@ -308,10 +307,10 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
 
   const ensureLearningLoaded = useCallback(async () => {
     if (learningLoaded) return;
-    const items = await learningApi.listLearning(workspaceId);
+    const items = await learningApi.listLearning();
     setLearningItems(items);
     setLearningLoaded(true);
-  }, [learningLoaded, workspaceId]);
+  }, [learningLoaded]);
 
   const addPatient = useCallback(
     async (

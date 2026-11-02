@@ -21,7 +21,6 @@ export function LearningView() {
   const toast = useToast();
   const {
     ready,
-    workspaceId,
     learningItems,
     ensureLearningLoaded,
     addLearning,
@@ -51,9 +50,9 @@ export function LearningView() {
     return () => {
       cancelled = true;
     };
-    // Reload when workspace changes; ensureLearningLoaded identity is unstable after load.
+    // ensureLearningLoaded identity changes after load; ready is the real gate.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ready, workspaceId]);
+  }, [ready]);
 
   const generalItems = useMemo(
     () =>
@@ -101,7 +100,7 @@ export function LearningView() {
     <div className="space-y-6">
       <PageHeader
         title="Learning"
-        subtitle="Dump what you need to study — general topics and patient-specific notes in one place."
+        subtitle="Shared across clinic and private — dump what you need to study in one place."
       />
 
       {error ? <AlertBanner tone="error">{error}</AlertBanner> : null}

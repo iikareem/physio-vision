@@ -11,13 +11,8 @@ import (
 )
 
 func (s *Server) handleListLearning(w http.ResponseWriter, r *http.Request) {
-	workspace, err := parseWorkspace(r.URL.Query().Get("workspace"))
-	if err != nil {
-		badRequest(w, err)
-		return
-	}
-
-	f := store.ListLearningFilter{Workspace: workspace}
+	// Learning is shared across clinic + private; workspace query is ignored if present.
+	f := store.ListLearningFilter{}
 	if pid := strings.TrimSpace(r.URL.Query().Get("patientId")); pid != "" {
 		f.PatientID = &pid
 	} else if r.URL.Query().Get("scope") == "general" {

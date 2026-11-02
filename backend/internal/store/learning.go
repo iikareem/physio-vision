@@ -11,23 +11,23 @@ import (
 )
 
 type ListLearningFilter struct {
-	Workspace model.Workspace
 	PatientID *string
 	General   bool // only items with no patient
 	Done      *bool
 }
 
 func (s *Store) ListLearningItems(ctx context.Context, ownerID string, f ListLearningFilter) ([]model.LearningItem, error) {
+	// Learning is shared across clinic + private for the owner.
 	q := `
 		SELECT
 			l.id, l.owner_id, l.workspace, l.patient_id, p.name,
 			l.body, l.done, l.created_at, l.updated_at
 		FROM learning_items l
 		LEFT JOIN patients p ON p.id = l.patient_id
-		WHERE l.owner_id = $1 AND l.workspace = $2
+		WHERE l.owner_id = $1
 	`
-	args := []any{ownerID, string(f.Workspace)}
-	argN := 3
+	args := []any{ownerID}
+	argN := 2
 
 	if f.PatientID != nil {
 		q += fmt.Sprintf(` AND l.patient_id = $%d`, argN)
@@ -64,12 +64,10 @@ func (s *Store) ListLearningItems(ctx context.Context, ownerID string, f ListLea
 }
 
 func (s *Store) ListLearningItemsForPatient(ctx context.Context, ownerID, patientID string) ([]model.LearningItem, error) {
-	patient, err := s.GetPatient(ctx, ownerID, patientID)
-	if err != nil {
+	if _, err := s.GetPatient(ctx, ownerID, patientID); err != nil {
 		return nil, err
 	}
 	return s.ListLearningItems(ctx, ownerID, ListLearningFilter{
-		Workspace: patient.Workspace,
 		PatientID: &patientID,
 	})
 }

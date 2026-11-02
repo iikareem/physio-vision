@@ -1,4 +1,5 @@
--- Learning dump: things to study, per patient or general (workspace-scoped).
+-- Learning dump: things to study, per patient or general.
+-- Shared across clinic + private for the owner; workspace is origin metadata only.
 
 CREATE TABLE learning_items (
     id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
