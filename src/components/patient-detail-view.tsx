@@ -84,6 +84,16 @@ export function PatientDetailView({ patientId }: { patientId: string }) {
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
   const [extrasReady, setExtrasReady] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+  const bookingRef = useRef<HTMLDivElement>(null);
+
+  function openBooking() {
+    setBooking(true);
+    setEditing(false);
+    setError(null);
+    requestAnimationFrame(() => {
+      bookingRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  }
 
   useEffect(() => {
     if (!ready || !patientId) return;
@@ -207,10 +217,10 @@ export function PatientDetailView({ patientId }: { patientId: string }) {
           {!editing && (
             <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
               <PrimaryButton
-                onClick={() => setBooking((v) => !v)}
+                onClick={() => (booking ? setBooking(false) : openBooking())}
                 className="min-h-12 w-full px-5 text-base sm:w-auto"
               >
-                {booking ? "Cancel booking" : "Book session"}
+                {booking ? "Cancel" : "Add session"}
               </PrimaryButton>
               <SecondaryButton onClick={startEdit} className="min-h-12">
                 Edit profile
@@ -226,12 +236,14 @@ export function PatientDetailView({ patientId }: { patientId: string }) {
         </AlertBanner>
       ) : null}
 
-      {booking && (
-        <AddSessionForm
-          lockedPatientId={patient.id}
-          onCancel={() => setBooking(false)}
-        />
-      )}
+      {booking ? (
+        <div ref={bookingRef} className="scroll-mt-24">
+          <AddSessionForm
+            lockedPatientId={patient.id}
+            onCancel={() => setBooking(false)}
+          />
+        </div>
+      ) : null}
 
       {editing ? (
         <Surface className="p-5">
@@ -490,24 +502,46 @@ export function PatientDetailView({ patientId }: { patientId: string }) {
 
       <section className="grid gap-6 lg:grid-cols-2">
         <Surface className="p-5">
-          <div className="flex items-center justify-between gap-2">
+          <div className="flex flex-wrap items-center justify-between gap-2">
             <h2 className="font-[family-name:var(--font-display)] text-lg font-semibold text-stone-900">
               Sessions
             </h2>
-            <Link
-              href="/sessions"
-              className="text-sm font-semibold text-teal-700 hover:underline"
-            >
-              All sessions
-            </Link>
+            <div className="flex items-center gap-3">
+              <Link
+                href="/sessions"
+                className="text-sm font-semibold text-teal-700 hover:underline"
+              >
+                All sessions
+              </Link>
+              {!editing ? (
+                <PrimaryButton
+                  type="button"
+                  onClick={() => (booking ? setBooking(false) : openBooking())}
+                  className="min-h-10 px-3 text-sm"
+                >
+                  {booking ? "Cancel" : "Add session"}
+                </PrimaryButton>
+              ) : null}
+            </div>
           </div>
           <ul className="mt-4 divide-y divide-stone-100">
             {sessions.length === 0 ? (
               <li className="py-4">
                 <EmptyState
                   title="No sessions yet"
-                  description="Book a session to start the clinical record."
+                  description="Add a session for this patient to start the clinical record."
                 />
+                {!editing && !booking ? (
+                  <div className="mt-3 flex justify-center">
+                    <PrimaryButton
+                      type="button"
+                      onClick={openBooking}
+                      className="min-h-11 px-4"
+                    >
+                      Add session
+                    </PrimaryButton>
+                  </div>
+                ) : null}
               </li>
             ) : (
               sessions.slice(0, 8).map((s) => (

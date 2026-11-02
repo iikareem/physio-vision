@@ -101,7 +101,9 @@ export function AddSessionForm({
             New session
           </h2>
           <p className="mt-1 text-sm text-stone-500">
-            Pick the patient and date, then save.
+            {lockedPatient
+              ? "Choose the date and type, then save."
+              : "Pick the patient and date, then save."}
           </p>
         </div>
 
