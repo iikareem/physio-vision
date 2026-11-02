@@ -12,6 +12,7 @@ import {
 import { useAuth } from "@/context/auth-context";
 import * as appointmentsApi from "@/lib/api/appointments";
 import * as documentsApi from "@/lib/api/documents";
+import * as learningApi from "@/lib/api/learning";
 import * as notesApi from "@/lib/api/notes";
 import * as patientsApi from "@/lib/api/patients";
 import { saveBlobAsFile } from "@/lib/download";
@@ -19,6 +20,7 @@ import type {
   Appointment,
   AppointmentStatus,
   Document,
+  LearningItem,
   Note,
   Patient,
   WorkspaceId,
@@ -34,6 +36,7 @@ type AppStoreValue = {
   patients: Patient[];
   notes: Note[];
   documents: Document[];
+  learningItems: LearningItem[];
   appointments: Appointment[];
   getPatient: (id: string) => Patient | undefined;
   getAppointment: (id: string) => Appointment | undefined;
@@ -41,8 +44,10 @@ type AppStoreValue = {
   getNotesForAppointment: (appointmentId: string) => Note[];
   getDocumentsForPatient: (patientId: string) => Document[];
   getDocumentsForAppointment: (appointmentId: string) => Document[];
+  getLearningForPatient: (patientId: string) => LearningItem[];
   getSessionsForPatient: (patientId: string) => Appointment[];
   ensurePatientExtras: (patientId: string) => Promise<void>;
+  ensureLearningLoaded: () => Promise<void>;
   todayAppointments: Appointment[];
   workspaceSessions: Appointment[];
   addPatient: (
@@ -59,6 +64,12 @@ type AppStoreValue = {
     body: string,
     appointmentId?: string,
   ) => Promise<void>;
+  addLearning: (input: {
+    body: string;
+    patientId?: string;
+  }) => Promise<LearningItem>;
+  setLearningDone: (id: string, done: boolean) => Promise<void>;
+  removeLearning: (id: string) => Promise<void>;
   addDocument: (input: {
     patientId: string;
     file: File;
@@ -97,9 +108,11 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [notes, setNotes] = useState<Note[]>([]);
   const [documents, setDocuments] = useState<Document[]>([]);
+  const [learningItems, setLearningItems] = useState<LearningItem[]>([]);
   const [loadedPatients, setLoadedPatients] = useState<Set<string>>(
     () => new Set(),
   );
+  const [learningLoaded, setLearningLoaded] = useState(false);
   const [ready, setReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [now, setNow] = useState<Date | null>(null);
@@ -114,7 +127,9 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
     setAppointments([]);
     setNotes([]);
     setDocuments([]);
+    setLearningItems([]);
     setLoadedPatients(new Set());
+    setLearningLoaded(false);
     setReady(false);
     setError(null);
   }, []);
@@ -139,7 +154,9 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
         setAppointments(nextAppointments);
         setNotes([]);
         setDocuments([]);
+        setLearningItems([]);
         setLoadedPatients(new Set());
+        setLearningLoaded(false);
         setReady(true);
       })
       .catch((err: unknown) => {
@@ -251,12 +268,26 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
     [appointments],
   );
 
+  const getLearningForPatient = useCallback(
+    (patientId: string) =>
+      learningItems
+        .filter((item) => item.patientId === patientId)
+        .sort((a, b) => {
+          if (a.done !== b.done) return a.done ? 1 : -1;
+          return (
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+          );
+        }),
+    [learningItems],
+  );
+
   const ensurePatientExtras = useCallback(
     async (patientId: string) => {
       if (loadedPatients.has(patientId)) return;
-      const [patientNotes, patientDocs] = await Promise.all([
+      const [patientNotes, patientDocs, patientLearning] = await Promise.all([
         notesApi.listNotes(patientId),
         documentsApi.listDocuments(patientId),
+        learningApi.listPatientLearning(patientId),
       ]);
       setNotes((prev) => [
         ...prev.filter((n) => n.patientId !== patientId),
@@ -266,10 +297,21 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
         ...prev.filter((d) => d.patientId !== patientId),
         ...patientDocs,
       ]);
+      setLearningItems((prev) => [
+        ...prev.filter((item) => item.patientId !== patientId),
+        ...patientLearning,
+      ]);
       setLoadedPatients((prev) => new Set(prev).add(patientId));
     },
     [loadedPatients],
   );
+
+  const ensureLearningLoaded = useCallback(async () => {
+    if (learningLoaded) return;
+    const items = await learningApi.listLearning(workspaceId);
+    setLearningItems(items);
+    setLearningLoaded(true);
+  }, [learningLoaded, workspaceId]);
 
   const addPatient = useCallback(
     async (
@@ -305,6 +347,30 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
     },
     [],
   );
+
+  const addLearning = useCallback(
+    async (input: { body: string; patientId?: string }) => {
+      const item = input.patientId
+        ? await learningApi.createPatientLearning(input.patientId, input.body)
+        : await learningApi.createLearning({
+            workspaceId,
+            body: input.body,
+          });
+      setLearningItems((prev) => [item, ...prev.filter((x) => x.id !== item.id)]);
+      return item;
+    },
+    [workspaceId],
+  );
+
+  const setLearningDone = useCallback(async (id: string, done: boolean) => {
+    const item = await learningApi.updateLearning(id, { done });
+    setLearningItems((prev) => prev.map((x) => (x.id === id ? item : x)));
+  }, []);
+
+  const removeLearning = useCallback(async (id: string) => {
+    await learningApi.deleteLearning(id);
+    setLearningItems((prev) => prev.filter((x) => x.id !== id));
+  }, []);
 
   const addDocument = useCallback(
     async (input: {
@@ -385,6 +451,7 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
     patients,
     notes,
     documents,
+    learningItems,
     appointments,
     getPatient,
     getAppointment,
@@ -392,13 +459,18 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
     getNotesForAppointment,
     getDocumentsForPatient,
     getDocumentsForAppointment,
+    getLearningForPatient,
     getSessionsForPatient,
     ensurePatientExtras,
+    ensureLearningLoaded,
     todayAppointments,
     workspaceSessions,
     addPatient,
     updatePatient,
     addNote,
+    addLearning,
+    setLearningDone,
+    removeLearning,
     addDocument,
     downloadDocument,
     addAppointment,

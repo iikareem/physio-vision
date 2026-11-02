@@ -14,6 +14,10 @@ import {
   Spinner,
   useToast,
 } from "@/components/feedback";
+import {
+  LearningComposer,
+  LearningItemsList,
+} from "@/components/learning-list";
 import { PresetOrCustomField } from "@/components/preset-or-custom-field";
 import {
   Field,
@@ -39,10 +43,14 @@ export function PatientDetailView({ patientId }: { patientId: string }) {
     getPatient,
     getNotesForPatient,
     getDocumentsForPatient,
+    getLearningForPatient,
     getSessionsForPatient,
     ensurePatientExtras,
     updatePatient,
     addNote,
+    addLearning,
+    setLearningDone,
+    removeLearning,
     addDocument,
     downloadDocument,
   } = useAppStore();
@@ -50,6 +58,7 @@ export function PatientDetailView({ patientId }: { patientId: string }) {
   const patient = getPatient(patientId);
   const notes = getNotesForPatient(patientId);
   const documents = getDocumentsForPatient(patientId);
+  const learning = getLearningForPatient(patientId);
   const sessions = getSessionsForPatient(patientId);
 
   const [editing, setEditing] = useState(false);
@@ -604,6 +613,73 @@ export function PatientDetailView({ patientId }: { patientId: string }) {
           </ul>
         </Surface>
       </section>
+
+      <Surface className="p-5">
+        <div className="flex items-center justify-between gap-2">
+          <h2 className="font-[family-name:var(--font-display)] text-lg font-semibold text-stone-900">
+            Learning
+          </h2>
+          <Link
+            href="/learning"
+            className="text-sm font-semibold text-teal-700 hover:underline"
+          >
+            All learning
+          </Link>
+        </div>
+        <p className="mt-1 text-sm text-stone-500">
+          Dump what you need to study for this patient — shows up in Learning too.
+        </p>
+        <div className="mt-3">
+          <LearningComposer
+            placeholder="e.g. Look up meniscus rehab progressions for this case…"
+            busy={busy}
+            onAdd={async (body) => {
+              setBusy(true);
+              setError(null);
+              try {
+                await addLearning({ body, patientId: patient.id });
+                toast.success("Added to learning");
+              } catch (err) {
+                setError(
+                  err instanceof Error ? err.message : "Failed to add learning",
+                );
+              } finally {
+                setBusy(false);
+              }
+            }}
+          />
+        </div>
+        <div className="mt-4">
+          <LearningItemsList
+            items={learning}
+            loading={!extrasReady}
+            emptyTitle="Nothing to learn yet"
+            emptyDescription="Add topics, techniques, or questions for this case."
+            busy={busy}
+            onToggleDone={async (id, done) => {
+              setError(null);
+              try {
+                await setLearningDone(id, done);
+              } catch (err) {
+                setError(
+                  err instanceof Error ? err.message : "Failed to update item",
+                );
+              }
+            }}
+            onRemove={async (id) => {
+              setError(null);
+              try {
+                await removeLearning(id);
+                toast.success("Removed");
+              } catch (err) {
+                setError(
+                  err instanceof Error ? err.message : "Failed to remove item",
+                );
+              }
+            }}
+          />
+        </div>
+      </Surface>
 
       <Surface className="p-5">
         <h2 className="font-[family-name:var(--font-display)] text-lg font-semibold text-stone-900">

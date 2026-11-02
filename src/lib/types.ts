@@ -62,6 +62,18 @@ export interface Note {
   createdAt: string;
 }
 
+/** Free-form “need to learn” dump — patient-linked or general. */
+export interface LearningItem {
+  id: string;
+  workspaceId: WorkspaceId;
+  patientId?: string;
+  patientName?: string;
+  body: string;
+  done: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface Document {
   id: string;
   patientId: string;

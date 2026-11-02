@@ -175,3 +175,35 @@ func toDocumentDTOs(items []model.Document) []documentDTO {
 	}
 	return out
 }
+
+type learningDTO struct {
+	ID          string    `json:"id"`
+	WorkspaceID string    `json:"workspaceId"`
+	PatientID   *string   `json:"patientId,omitempty"`
+	PatientName *string   `json:"patientName,omitempty"`
+	Body        string    `json:"body"`
+	Done        bool      `json:"done"`
+	CreatedAt   time.Time `json:"createdAt"`
+	UpdatedAt   time.Time `json:"updatedAt"`
+}
+
+func toLearningDTO(item model.LearningItem) learningDTO {
+	return learningDTO{
+		ID:          item.ID,
+		WorkspaceID: string(item.Workspace),
+		PatientID:   item.PatientID,
+		PatientName: item.PatientName,
+		Body:        item.Body,
+		Done:        item.Done,
+		CreatedAt:   item.CreatedAt,
+		UpdatedAt:   item.UpdatedAt,
+	}
+}
+
+func toLearningDTOs(items []model.LearningItem) []learningDTO {
+	out := make([]learningDTO, 0, len(items))
+	for _, item := range items {
+		out = append(out, toLearningDTO(item))
+	}
+	return out
+}

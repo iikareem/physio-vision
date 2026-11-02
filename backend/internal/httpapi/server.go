@@ -52,8 +52,15 @@ func (s *Server) Router() http.Handler {
 		pr.Post("/patients/{id}/notes", s.handleCreateNote)
 		pr.Get("/patients/{id}/documents", s.handleListDocuments)
 		pr.Post("/patients/{id}/documents", s.handleCreateDocument)
+		pr.Get("/patients/{id}/learning", s.handleListPatientLearning)
+		pr.Post("/patients/{id}/learning", s.handleCreatePatientLearning)
 
 		pr.Get("/documents/{id}/file", s.handleDownloadDocument)
+
+		pr.Get("/learning", s.handleListLearning)
+		pr.Post("/learning", s.handleCreateLearning)
+		pr.Patch("/learning/{id}", s.handleUpdateLearning)
+		pr.Delete("/learning/{id}", s.handleDeleteLearning)
 
 		pr.Get("/appointments", s.handleListAppointments)
 		pr.Post("/appointments", s.handleCreateAppointment)

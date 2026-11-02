@@ -41,6 +41,16 @@ const NAV = [
     ),
   },
   {
+    href: "/learning",
+    label: "Learn",
+    match: (path: string) => path.startsWith("/learning"),
+    icon: (
+      <svg viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor" aria-hidden>
+        <path d="M4.5 4.75A.75.75 0 0 1 5.25 4H11a2.25 2.25 0 0 1 2.25 2.25V19.5a.75.75 0 0 1-1.2.6L9 17.4l-3.05 2.7a.75.75 0 0 1-1.2-.6V4.75ZM12.75 4H18.75A.75.75 0 0 1 19.5 4.75V19.5a.75.75 0 0 1-1.2.6L15.25 17.4l-1.3 1.15V6.25A2.25 2.25 0 0 0 12.75 4Z" />
+      </svg>
+    ),
+  },
+  {
     href: "/analytics",
     label: "Stats",
     match: (path: string) => path.startsWith("/analytics"),
@@ -121,7 +131,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   ? "Settings"
                   : item.label === "Stats"
                     ? "Analytics"
-                    : item.label}
+                    : item.label === "Learn"
+                      ? "Learning"
+                      : item.label}
               </Link>
             );
           })}
@@ -202,7 +214,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         className="fixed inset-x-0 bottom-0 z-40 border-t border-stone-200/90 bg-white/95 backdrop-blur md:hidden safe-bottom"
         aria-label="Primary"
       >
-        <ul className="grid grid-cols-5">
+        <ul className="grid grid-cols-6">
           {NAV.map((item) => {
             const active = item.match(pathname);
             return (
