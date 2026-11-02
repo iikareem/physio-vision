@@ -25,7 +25,9 @@ type Service struct {
 func NewService(secret string) *Service {
 	return &Service{
 		secret: []byte(secret),
-		ttl:    24 * time.Hour,
+		// Single-therapist clinic app: keep the session for a long time so
+		// redeploys and day-to-day use don't force a re-login every day.
+		ttl: 90 * 24 * time.Hour,
 	}
 }
 

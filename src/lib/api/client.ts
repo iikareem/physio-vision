@@ -1,4 +1,5 @@
 const TOKEN_KEY = "physio-vision-token";
+const USER_KEY = "physio-vision-user";
 
 export class ApiError extends Error {
   status: number;
@@ -34,6 +35,29 @@ export function setStoredToken(token: string | null) {
   if (typeof window === "undefined") return;
   if (token) localStorage.setItem(TOKEN_KEY, token);
   else localStorage.removeItem(TOKEN_KEY);
+}
+
+export function getStoredUser<T>(): T | null {
+  if (typeof window === "undefined") return null;
+  const raw = localStorage.getItem(USER_KEY);
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw) as T;
+  } catch {
+    localStorage.removeItem(USER_KEY);
+    return null;
+  }
+}
+
+export function setStoredUser(user: unknown | null) {
+  if (typeof window === "undefined") return;
+  if (user) localStorage.setItem(USER_KEY, JSON.stringify(user));
+  else localStorage.removeItem(USER_KEY);
+}
+
+export function clearStoredSession() {
+  setStoredToken(null);
+  setStoredUser(null);
 }
 
 export type ApiFetchOptions = {
