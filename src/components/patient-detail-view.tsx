@@ -26,7 +26,13 @@ import {
   SecondaryButton,
   Surface,
 } from "@/components/ui";
-import { formatDate, formatDateTime } from "@/lib/format";
+import {
+  ageFromDateOfBirth,
+  dateOfBirthFromAge,
+  formatAge,
+  formatDate,
+  formatDateTime,
+} from "@/lib/format";
 import {
   CONDITION_OPTIONS,
   PRECAUTION_OPTIONS,
@@ -64,7 +70,7 @@ export function PatientDetailView({ patientId }: { patientId: string }) {
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
-  const [dateOfBirth, setDateOfBirth] = useState("");
+  const [age, setAge] = useState("");
   const [occupation, setOccupation] = useState("");
   const [condition, setCondition] = useState("");
   const [diagnosis, setDiagnosis] = useState("");
@@ -125,7 +131,10 @@ export function PatientDetailView({ patientId }: { patientId: string }) {
   function startEdit() {
     setName(patient!.name);
     setPhone(patient!.phone ?? "");
-    setDateOfBirth(patient!.dateOfBirth ?? "");
+    const years = patient!.dateOfBirth
+      ? ageFromDateOfBirth(patient!.dateOfBirth)
+      : null;
+    setAge(years === null ? "" : String(years));
     setOccupation(patient!.occupation ?? "");
     setCondition(patient!.condition);
     setDiagnosis(patient!.diagnosis ?? "");
@@ -144,10 +153,17 @@ export function PatientDetailView({ patientId }: { patientId: string }) {
     setBusy(true);
     setError(null);
     try {
+      const ageYears = Number.parseInt(age.trim(), 10);
+      const nextDob =
+        age.trim() === ""
+          ? ""
+          : Number.isFinite(ageYears) && ageYears >= 0 && ageYears <= 150
+            ? dateOfBirthFromAge(ageYears)
+            : patient!.dateOfBirth ?? "";
       await updatePatient(patient!.id, {
         name: name.trim(),
         phone: phone.trim() || "",
-        dateOfBirth: dateOfBirth.trim() || "",
+        dateOfBirth: nextDob,
         occupation: occupation.trim() || "",
         condition: condition.trim(),
         diagnosis: diagnosis.trim() || "",
@@ -265,11 +281,15 @@ export function PatientDetailView({ patientId }: { patientId: string }) {
                   className={inputClass}
                 />
               </Field>
-              <Field label="Date of birth (optional)">
+              <Field label="Age (optional)">
                 <input
-                  type="date"
-                  value={dateOfBirth}
-                  onChange={(e) => setDateOfBirth(e.target.value)}
+                  type="number"
+                  inputMode="numeric"
+                  min={0}
+                  max={150}
+                  value={age}
+                  onChange={(e) => setAge(e.target.value)}
+                  placeholder="Years"
                   className={inputClass}
                 />
               </Field>
@@ -416,12 +436,10 @@ export function PatientDetailView({ patientId }: { patientId: string }) {
             </div>
             <div>
               <dt className="text-xs font-medium uppercase tracking-wide text-stone-500">
-                Date of birth
+                Age
               </dt>
               <dd className="mt-1 text-stone-800">
-                {patient.dateOfBirth
-                  ? formatDate(`${patient.dateOfBirth}T12:00:00`)
-                  : "—"}
+                {formatAge(patient.dateOfBirth) ?? "—"}
               </dd>
             </div>
             <div>

@@ -16,6 +16,7 @@ import {
   PRECAUTION_OPTIONS,
   TREATMENT_GOAL_OPTIONS,
 } from "@/lib/patient-clinical-options";
+import { dateOfBirthFromAge } from "@/lib/format";
 import type { PatientStatus } from "@/lib/types";
 
 const textareaClass = `${inputClass} min-h-[5.5rem] py-3`;
@@ -30,7 +31,7 @@ export function AddPatientForm({ onCancel, onCreated }: Props) {
   const { addPatient } = useAppStore();
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
-  const [dateOfBirth, setDateOfBirth] = useState("");
+  const [age, setAge] = useState("");
   const [occupation, setOccupation] = useState("");
   const [condition, setCondition] = useState("");
   const [diagnosis, setDiagnosis] = useState("");
@@ -48,7 +49,7 @@ export function AddPatientForm({ onCancel, onCreated }: Props) {
   function resetForm() {
     setName("");
     setPhone("");
-    setDateOfBirth("");
+    setAge("");
     setOccupation("");
     setCondition("");
     setDiagnosis("");
@@ -66,10 +67,14 @@ export function AddPatientForm({ onCancel, onCreated }: Props) {
     setError(null);
     setSaving(true);
     try {
+      const ageYears = Number.parseInt(age.trim(), 10);
       const created = await addPatient({
         name: name.trim(),
         phone: phone.trim() || undefined,
-        dateOfBirth: dateOfBirth.trim() || undefined,
+        dateOfBirth:
+          Number.isFinite(ageYears) && ageYears >= 0 && ageYears <= 150
+            ? dateOfBirthFromAge(ageYears)
+            : undefined,
         occupation: occupation.trim() || undefined,
         condition: condition.trim(),
         diagnosis: diagnosis.trim() || undefined,
@@ -139,12 +144,16 @@ export function AddPatientForm({ onCancel, onCreated }: Props) {
               />
             </Field>
 
-            <Field label="Date of birth (optional)">
+            <Field label="Age (optional)">
               <input
-                id={`${formId}-dob`}
-                type="date"
-                value={dateOfBirth}
-                onChange={(e) => setDateOfBirth(e.target.value)}
+                id={`${formId}-age`}
+                type="number"
+                inputMode="numeric"
+                min={0}
+                max={150}
+                value={age}
+                onChange={(e) => setAge(e.target.value)}
+                placeholder="Years"
                 className={inputClass}
               />
             </Field>
