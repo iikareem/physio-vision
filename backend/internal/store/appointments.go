@@ -91,7 +91,7 @@ func (s *Store) CreateAppointment(ctx context.Context, ownerID string, in Create
 
 	const q = `
 		INSERT INTO appointments (owner_id, patient_id, workspace, starts_at, status, type)
-		VALUES ($1, $2, $3, $4, 'scheduled', $5)
+		VALUES ($1, $2, $3, $4, 'done', $5)
 		RETURNING id, owner_id, patient_id, workspace, starts_at, status, type, summary, created_at, updated_at
 	`
 	row := s.pool.QueryRow(ctx, q, ownerID, in.PatientID, string(in.Workspace), in.StartsAt, in.Type)
@@ -154,6 +154,20 @@ func (s *Store) UpdateAppointment(ctx context.Context, ownerID, id string, in Up
 		return nil, fmt.Errorf("update appointment: %w", err)
 	}
 	return &a, nil
+}
+
+func (s *Store) DeleteAppointment(ctx context.Context, ownerID, id string) error {
+	tag, err := s.pool.Exec(ctx,
+		`DELETE FROM appointments WHERE owner_id = $1 AND id = $2`,
+		ownerID, id,
+	)
+	if err != nil {
+		return fmt.Errorf("delete appointment: %w", err)
+	}
+	if tag.RowsAffected() == 0 {
+		return ErrNotFound
+	}
+	return nil
 }
 
 type appointmentScanner interface {

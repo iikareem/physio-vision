@@ -45,3 +45,9 @@ export function updateAppointment(
     body: patch,
   });
 }
+
+export function deleteAppointment(id: string) {
+  return apiJson<void>(`/appointments/${id}`, {
+    method: "DELETE",
+  });
+}

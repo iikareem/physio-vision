@@ -12,15 +12,7 @@ import {
   Surface,
 } from "@/components/ui";
 import { dateOnlyIso, todayDateInputValue } from "@/lib/format";
-
-const SESSION_TYPES = [
-  "Follow-up",
-  "Assessment",
-  "Rehab session",
-  "Home visit",
-  "Performance",
-  "Manual therapy",
-];
+import { SESSION_TYPES } from "@/lib/session-types";
 
 type Props = {
   lockedPatientId?: string;
@@ -102,8 +94,8 @@ export function AddSessionForm({
           </h2>
           <p className="mt-1 text-sm text-stone-500">
             {lockedPatient
-              ? "Choose the date and type, then save."
-              : "Pick the patient and date, then save."}
+              ? "Log this visit — date and type. Add notes after you save."
+              : "Log a visit — patient, date, and type. Add notes after you save."}
           </p>
         </div>
 
@@ -187,7 +179,7 @@ export function AddSessionForm({
             disabled={!(lockedPatientId || patientId) || saving}
             className="sm:min-w-[10rem]"
           >
-            {saving ? "Saving…" : "Save & open"}
+            {saving ? "Saving…" : "Save session"}
           </PrimaryButton>
         </div>
       </form>

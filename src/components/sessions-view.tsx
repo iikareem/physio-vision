@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useAppStore } from "@/context/app-store";
 import { AddSessionForm } from "@/components/add-session-form";
-import { AppointmentStatusBadge } from "@/components/status-badge";
 import {
   inputClass,
   PageHeader,
@@ -12,7 +11,7 @@ import {
   SecondaryButton,
   Surface,
 } from "@/components/ui";
-import { formatDate, isOpenSession } from "@/lib/format";
+import { formatDate } from "@/lib/format";
 import type { Appointment } from "@/lib/types";
 import { useHydrated } from "@/lib/use-hydrated";
 
@@ -37,7 +36,7 @@ function SessionRow({
   return (
     <Link
       href={`/sessions/${session.id}`}
-      className="flex min-h-16 items-center justify-between gap-3 px-4 py-3.5 transition hover:bg-stone-50 active:bg-stone-100 sm:px-5"
+      className="flex min-h-16 items-center gap-3 px-4 py-3.5 transition hover:bg-stone-50 active:bg-stone-100 sm:px-5"
     >
       <div className="min-w-0">
         <p className="truncate font-semibold text-stone-900">{patientName}</p>
@@ -46,7 +45,6 @@ function SessionRow({
           {condition ? ` · ${condition}` : ""}
         </p>
       </div>
-      <AppointmentStatusBadge status={session.status} />
     </Link>
   );
 }
@@ -97,7 +95,7 @@ export function SessionsView() {
 
       if (isSameDay(s.startsAt, now)) {
         todayList.push(s);
-      } else if (starts.getTime() > now.getTime() && isOpenSession(s.status)) {
+      } else if (starts.getTime() > now.getTime()) {
         upcomingList.push(s);
       } else {
         pastList.push(s);
@@ -118,7 +116,7 @@ export function SessionsView() {
     <div className="space-y-6">
       <PageHeader
         title="Sessions"
-        subtitle={`${workspaceId === "clinic" ? "Clinic" : "Private"} · today, history, and new bookings`}
+        subtitle={`${workspaceId === "clinic" ? "Clinic" : "Private"} · log sessions, then add notes anytime`}
         action={
           <PrimaryButton onClick={() => setShowForm((v) => !v)}>
             {showForm ? "Cancel" : "New session"}

@@ -85,11 +85,21 @@ type AppStoreValue = {
     startsAt: string;
     type: string;
   }) => Promise<Appointment>;
+  updateAppointment: (
+    id: string,
+    patch: {
+      startsAt?: string;
+      status?: AppointmentStatus;
+      type?: string;
+      summary?: string;
+    },
+  ) => Promise<Appointment>;
   setAppointmentStatus: (
     id: string,
     status: AppointmentStatus,
   ) => Promise<void>;
   updateAppointmentSummary: (id: string, summary: string) => Promise<void>;
+  deleteAppointment: (id: string) => Promise<void>;
   clearCache: () => void;
 };
 
@@ -418,29 +428,43 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
     [workspaceId],
   );
 
-  const setAppointmentStatus = useCallback(
-    async (id: string, nextStatus: AppointmentStatus) => {
-      const appointment = await appointmentsApi.updateAppointment(id, {
-        status: nextStatus,
-      });
+  const updateAppointment = useCallback(
+    async (
+      id: string,
+      patch: {
+        startsAt?: string;
+        status?: AppointmentStatus;
+        type?: string;
+        summary?: string;
+      },
+    ) => {
+      const appointment = await appointmentsApi.updateAppointment(id, patch);
       setAppointments((prev) =>
         prev.map((a) => (a.id === id ? appointment : a)),
       );
+      return appointment;
     },
     [],
   );
 
+  const setAppointmentStatus = useCallback(
+    async (id: string, nextStatus: AppointmentStatus) => {
+      await updateAppointment(id, { status: nextStatus });
+    },
+    [updateAppointment],
+  );
+
   const updateAppointmentSummary = useCallback(
     async (id: string, summary: string) => {
-      const appointment = await appointmentsApi.updateAppointment(id, {
-        summary,
-      });
-      setAppointments((prev) =>
-        prev.map((a) => (a.id === id ? appointment : a)),
-      );
+      await updateAppointment(id, { summary });
     },
-    [],
+    [updateAppointment],
   );
+
+  const deleteAppointment = useCallback(async (id: string) => {
+    await appointmentsApi.deleteAppointment(id);
+    setAppointments((prev) => prev.filter((a) => a.id !== id));
+  }, []);
 
   const value: AppStoreValue = {
     ready: status === "authenticated" ? ready : false,
@@ -473,8 +497,10 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
     addDocument,
     downloadDocument,
     addAppointment,
+    updateAppointment,
     setAppointmentStatus,
     updateAppointmentSummary,
+    deleteAppointment,
     clearCache,
   };
 

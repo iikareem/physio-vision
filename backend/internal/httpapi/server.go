@@ -66,6 +66,7 @@ func (s *Server) Router() http.Handler {
 		pr.Post("/appointments", s.handleCreateAppointment)
 		pr.Get("/appointments/{id}", s.handleGetAppointment)
 		pr.Patch("/appointments/{id}", s.handleUpdateAppointment)
+		pr.Delete("/appointments/{id}", s.handleDeleteAppointment)
 	})
 
 	return r

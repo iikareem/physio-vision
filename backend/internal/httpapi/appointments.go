@@ -152,3 +152,17 @@ func (s *Server) handleUpdateAppointment(w http.ResponseWriter, r *http.Request)
 	}
 	writeJSON(w, http.StatusOK, toAppointmentDTO(*a))
 }
+
+func (s *Server) handleDeleteAppointment(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	err := s.store.DeleteAppointment(r.Context(), ownerIDFrom(r.Context()), id)
+	if err != nil {
+		if errors.Is(err, store.ErrNotFound) {
+			writeError(w, http.StatusNotFound, "appointment not found")
+			return
+		}
+		writeError(w, http.StatusInternalServerError, "failed to delete appointment")
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}

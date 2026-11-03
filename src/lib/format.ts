@@ -69,23 +69,21 @@ export function isSameDay(a: string, b: Date = new Date()): boolean {
   );
 }
 
-/** Therapist-facing labels (not reception desk language). */
+/** Therapist-facing labels (legacy statuses kept for old rows). */
 export function appointmentStatusLabel(
   status: "scheduled" | "checked_in" | "done" | "no_show",
 ): string {
   switch (status) {
     case "scheduled":
-      return "To do";
     case "checked_in":
-      return "With you";
     case "done":
-      return "Finished";
+      return "Logged";
     case "no_show":
       return "Skipped";
   }
 }
 
-/** Still open for the physio to treat today. */
+/** Legacy helper — new sessions are created as done; notes stay editable always. */
 export function isOpenSession(
   status: "scheduled" | "checked_in" | "done" | "no_show",
 ): boolean {

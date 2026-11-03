@@ -1,6 +1,13 @@
 "use client";
 
-import { useEffect, useId, useMemo, useRef, useState } from "react";
+import {
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+  type PointerEvent as ReactPointerEvent,
+} from "react";
 import type { Patient } from "@/lib/types";
 import { inputClass } from "@/components/ui";
 
@@ -57,17 +64,28 @@ export function PatientPicker({
   }, [search, open]);
 
   useEffect(() => {
-    function onDoc(e: MouseEvent) {
+    function onDoc(e: PointerEvent) {
       if (!rootRef.current?.contains(e.target as Node)) setOpen(false);
     }
-    document.addEventListener("mousedown", onDoc);
-    return () => document.removeEventListener("mousedown", onDoc);
+    document.addEventListener("pointerdown", onDoc);
+    return () => document.removeEventListener("pointerdown", onDoc);
   }, []);
 
   function pick(patient: Patient) {
     onChange(patient.id);
     setSearch("");
     setOpen(false);
+  }
+
+  /** Pick on pointerdown so mobile taps succeed before the keyboard closes and reflows the list. */
+  function onOptionPointerDown(
+    e: ReactPointerEvent<HTMLButtonElement>,
+    patient: Patient,
+  ) {
+    if (e.button !== 0) return;
+    e.preventDefault();
+    e.stopPropagation();
+    pick(patient);
   }
 
   function clear() {
@@ -142,7 +160,7 @@ export function PatientPicker({
         <ul
           id={listId}
           role="listbox"
-          className="absolute z-40 mt-1 max-h-64 w-full overflow-auto rounded-xl border border-stone-200 bg-white py-1 shadow-lg"
+          className="absolute z-50 mt-1 max-h-64 w-full overflow-auto rounded-xl border border-stone-200 bg-white py-1 shadow-lg"
         >
           {results.length === 0 ? (
             <li className="px-3 py-3 text-sm text-stone-500">
@@ -163,8 +181,8 @@ export function PatientPicker({
                     <button
                       type="button"
                       onMouseEnter={() => setHighlight(index)}
-                      onClick={() => pick(p)}
-                      className={`flex w-full flex-col items-start px-3 py-2.5 text-left ${
+                      onPointerDown={(e) => onOptionPointerDown(e, p)}
+                      className={`flex w-full flex-col items-start px-3 py-2.5 text-left touch-manipulation ${
                         index === highlight ? "bg-teal-50" : "hover:bg-stone-50"
                       }`}
                     >

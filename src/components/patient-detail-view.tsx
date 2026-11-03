@@ -6,7 +6,7 @@ import { useAppStore } from "@/context/app-store";
 import { useHydrated } from "@/lib/use-hydrated";
 import { AddSessionForm } from "@/components/add-session-form";
 import { PatientStatusPicker } from "@/components/patient-status-picker";
-import { AppointmentStatusBadge, PatientStatusBadge } from "@/components/status-badge";
+import { PatientStatusBadge } from "@/components/status-badge";
 import {
   AlertBanner,
   EmptyState,
@@ -566,7 +566,7 @@ export function PatientDetailView({ patientId }: { patientId: string }) {
                 <li key={s.id}>
                   <Link
                     href={`/sessions/${s.id}`}
-                    className="flex items-center justify-between gap-3 py-3 hover:bg-stone-50/80"
+                    className="flex items-center gap-3 py-3 hover:bg-stone-50/80"
                   >
                     <div>
                       <p className="font-semibold text-stone-900">
@@ -574,7 +574,6 @@ export function PatientDetailView({ patientId }: { patientId: string }) {
                       </p>
                       <p className="text-sm text-stone-500">{s.type}</p>
                     </div>
-                    <AppointmentStatusBadge status={s.status} />
                   </Link>
                 </li>
               ))
